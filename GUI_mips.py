@@ -52,7 +52,7 @@ class Window(QtWidgets.QMainWindow):
             
     
     def output_to_gui(self):
-        table = self.form_widget.opcodes
+        table = self.form_widget.layout.load_tab.layout.opcodes
         table.setRowCount(0)
         
         for i,line in enumerate(self.code):
