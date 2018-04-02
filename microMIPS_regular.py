@@ -1,5 +1,7 @@
 import re
 from pprint import pprint
+from GUI_mips import *
+from threading import Thread
 
 
 ins_List = ["LD", "SD", "DADDIU", "XORI", "DADDU", "SLT", "BGTZC", "J"]
@@ -408,8 +410,21 @@ def get_line_address(offset):
 
     return 0
 
+def run_UI():
+    app = QtWidgets.QApplication(sys.argv)
+    GUI = Window()
+    GUI.show()
+    app.exec()
+
 
 if __name__ == '__main__':
+    # def run():
+
+
+    thread = Thread(target=run_UI, args=())
+    thread.start()
+    # thread.join()
+
     #cleaning code.
     clean_code = find_address(test_string)
 

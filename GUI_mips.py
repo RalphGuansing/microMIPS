@@ -1,6 +1,5 @@
 import sys
 from PyQt5 import QtWidgets
-from microMIPS import *
 
 
 class Window(QtWidgets.QMainWindow):
@@ -17,8 +16,7 @@ class Window(QtWidgets.QMainWindow):
         self.extractAction2.setShortcut('F7')
         
         self.statusBar()
-        
-        self.MIPS = MIPS()
+
         
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu('&Run')
@@ -124,13 +122,14 @@ class mainview(QtWidgets.QVBoxLayout):
         label2 = QtWidgets.QLabel('Pipeline')
         
         self.pipelineMap = QtWidgets.QTableWidget()
-        self.pipelineMap.setColumnCount(4)
-        self.pipelineMap.setRowCount(5)        
-        self.pipelineMap.setHorizontalHeaderLabels(["Instruction","1","2","3"])
+        self.pipelineMap.setColumnCount(1)
+#        self.pipelineMap.setRowCount(5)        
+#        self.pipelineMap.setHorizontalHeaderLabels(["Instruction","1","2","3"])
+        self.pipelineMap.setHorizontalHeaderLabels(["Instruction"])
         self.pipelineMap.setColumnWidth(0,150)
-        self.pipelineMap.setColumnWidth(1,50)
-        self.pipelineMap.setColumnWidth(2,50)
-        self.pipelineMap.setColumnWidth(3,50)
+#        self.pipelineMap.setColumnWidth(1,50)
+#        self.pipelineMap.setColumnWidth(2,50)
+#        self.pipelineMap.setColumnWidth(3,50)
         
         
         self.registers = QtWidgets.QTableWidget()
@@ -169,10 +168,10 @@ class Tabs(QtWidgets.QGridLayout):
         
     
     
-def run():        
-    app = QtWidgets.QApplication(sys.argv)
-    GUI = Window()
-    GUI.show()
-    sys.exit(app.exec())
-    
-run()       
+# def run():
+#    app = QtWidgets.QApplication(sys.argv)
+#    GUI = Window()
+#    GUI.show()
+#    sys.exit(app.exec())
+
+#run()       
