@@ -207,17 +207,17 @@ def DADDU_SLT(instruction):
     return {"ALUOUT": output, "cond": cond}
 
 def BGTZC_J(instruction):
-    pprint(reg_Phase)
+#    pprint(reg_Phase)
     output = ""
     cond = 0
-    print(int(regList[instruction["ins_rt"]]["regValue"], 16))
+#    print(int(regList[instruction["ins_rt"]]["regValue"], 16))
     if instruction["ins_Num"] == 6:
         #BGTZC operation
         NPC = int(reg_Phase[1]["ID/EX.NPC"], 16)
         IMM = int(reg_Phase[1]["ID/EX.IMM"], 16)
-        print(NPC, " + ", IMM, " *4")
+#        print(NPC, " + ", IMM, " *4")
         output = NPC + IMM * 4
-        print("ALUOUTPUT = ", hex(output))
+#        print("ALUOUTPUT = ", hex(output))
 
         if int(regList[instruction["ins_rt"]]["regValue"], 16) > 0:
             cond = 1
@@ -227,8 +227,9 @@ def BGTZC_J(instruction):
     else:
         #J operation
         pass
-
-    print("condition is ",cond)
+    output = hex(output).split('x')[-1].zfill(16)
+#    print("ALUOUTPUT = ", output)
+#    print("condition is ",cond)
     return {"ALUOUT": output, "cond": cond}
 
 
@@ -251,7 +252,7 @@ def ID(ins_String):
             reg_Phase[1]["ID/EX.NPC"] = reg_Phase[0]["IF/ID.NPC"]
             reg_Phase[1]["ID/EX.B"] = regList[ins_String["ins_rt"]]["regValue"]
             reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
-            pprint(reg_Phase[1])
+#            pprint(reg_Phase[1])
             #get A, B and imm
         #---------------------INC---------------------------
     elif ins_String["ins_type"] == 2: #IMM
@@ -510,7 +511,7 @@ if __name__ == '__main__':
         for inCount in range(done, max_Ins + 1):
             print("inst # ", inCount , max_Ins)
 
-
+#            print('inst_Phase',ins_String[inCount]["inst_Phase"])
             phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
             print(ins_String[inCount]["inst_String"])
             if ins_String[inCount]["inst_Phase"] == 5:
