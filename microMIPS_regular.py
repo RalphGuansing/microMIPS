@@ -46,8 +46,8 @@ def DADDIU_XORI_REGEX(expression):
     else:
         return True
 
-#---------------------INC---------------------------
-def BGTZC_J_REGEX(expression):
+#---------------------ralph---------------------------
+def BGTZC_REGEX(expression):
     sanitized = expression.split(" ")
     del sanitized[0]
 #    print(sanitized[len(sanitized)-2]) e.g. R1,
@@ -57,7 +57,18 @@ def BGTZC_J_REGEX(expression):
         return False
     else:
         return True
-#---------------------INC---------------------------
+    
+def J_REGEX(expression):
+    sanitized = expression.split(" ")
+    del sanitized[0]
+#    print(sanitized[len(sanitized)-2]) e.g. R1,
+    sanitized = " ".join(sanitized)
+
+    if re.match(r"^\w+$", sanitized):
+        return False
+    else:
+        return True
+#---------------------ralph---------------------------
 
 
 def DADDU_SLT_REFORMAT(expression):
@@ -139,8 +150,8 @@ def DADDIU_XORI_REFORMAT(expression):
     return {"ins_rs": rs, "ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": False, "if_Imm": True, "if_LSD": False}
 
 #---------------------INC---------------------------
-def BGTZC_J_REFORMAT(expression, current_line):
-    print("in BGTZC_J_REFORMAT")
+def BGTZC_REFORMAT(expression, current_line):
+    print("in BGTZC_REFORMAT")
     print(expression)
     ins_Op = {0: 0b010111, 1: 0b000010}
     bin_Opcode = []
@@ -161,15 +172,42 @@ def BGTZC_J_REFORMAT(expression, current_line):
     bin_Opcode.append(bin(offset).split('b')[-1].zfill(16))
     hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
 
-    print(offset)
-    print(bin_Opcode)
+#    print(offset)
+#    print(bin_Opcode)
 
     imm = hex_Opcode[-4:]
-    print("THIS IS IMM ", imm)
+#    print("THIS IS IMM ", imm)
 
     print("OPCODE: ", hex_Opcode, "\n")
 
     return {"ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": True, "if_Imm": False, "if_LSD": False}
+
+def J_REFORMAT(expression):
+    print("in J_REFORMAT")
+    print(expression)
+    ins_Op ={0: 0b000010}
+    bin_Opcode = []
+    bin_Opcode.append(bin(ins_Op[0]).split('b')[-1].zfill(6))
+    bin_Opcode.append(bin(0).split('b')[-1].zfill(5))
+    bin_Opcode.append(bin(0).split('b')[-1].zfill(5))
+    
+    sanitized = expression.split(" ")
+    del sanitized[0]
+    
+    offset_line = get_line_address(sanitized[0])
+    bin_Opcode.append(bin(offset_line).split('b')[-1].zfill(16))
+    hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
+    
+    imm = hex_Opcode[-4:]
+    
+    print(bin_Opcode)
+    print("OPCODE: ", hex_Opcode, "\n")
+    
+    
+    rt = ""
+    return {"ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": True, "if_Imm": False, "if_LSD": False}
+    
+    
 #---------------------INC---------------------------
 
 def LD_SD(instruction):
@@ -225,8 +263,10 @@ def BGTZC_J(instruction):
             cond = 0
 
     else:
-        #J operation
-        pass
+        IMM = int(reg_Phase[1]["ID/EX.IMM"], 16)
+        output = IMM * 4
+        cond = 1
+        
     output = hex(output).split('x')[-1].zfill(16)
 #    print("ALUOUTPUT = ", output)
 #    print("condition is ",cond)
@@ -243,15 +283,22 @@ def IF(ins_String):
 def ID(ins_String):
     #---------------------INC--------------------------- tweaked, maybe goods
     if ins_String["ins_type"] == 1: #BGTZC/J
-        if regList[ins_String["ins_rt"]]["in_use"]:
-            ins_String["if_Stall"] = True
-        else:
-            ins_String["if_Stall"] = False
-            regList[ins_String["ins_rt"]]["in_use"] = True
+#        print("this is the rt", ins_String["ins_rt"])
+        if ins_String["ins_rt"] == "":
+            print("THIS IS J")
             reg_Phase[1]["ID/EX.IR"] = reg_Phase[0]["IF/ID.IR"]
             reg_Phase[1]["ID/EX.NPC"] = reg_Phase[0]["IF/ID.NPC"]
-            reg_Phase[1]["ID/EX.B"] = regList[ins_String["ins_rt"]]["regValue"]
             reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
+        else:
+            if regList[ins_String["ins_rt"]]["in_use"]:
+                ins_String["if_Stall"] = True
+            else:
+                ins_String["if_Stall"] = False
+                regList[ins_String["ins_rt"]]["in_use"] = True
+                reg_Phase[1]["ID/EX.IR"] = reg_Phase[0]["IF/ID.IR"]
+                reg_Phase[1]["ID/EX.NPC"] = reg_Phase[0]["IF/ID.NPC"]
+                reg_Phase[1]["ID/EX.B"] = regList[ins_String["ins_rt"]]["regValue"]
+                reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
 #            pprint(reg_Phase[1])
             #get A, B and imm
         #---------------------INC---------------------------
@@ -302,7 +349,8 @@ def EX(ins_String):
     ALUOUT = type_Inst[ins_String["ins_Num"]](ins_String)
 
     reg_Phase[2]["EX/MEM.IR"] = reg_Phase[1]["ID/EX.IR"]
-    reg_Phase[2]["EX/MEM.B"] = reg_Phase[1]["ID/EX.B"]
+    if ins_String["ins_Num"] != 7:
+        reg_Phase[2]["EX/MEM.B"] = reg_Phase[1]["ID/EX.B"]
     reg_Phase[2]["EX/MEM.ALUOUTPUT"] = ALUOUT["ALUOUT"]
     reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
     reg_Phase[1].clear()
@@ -324,6 +372,7 @@ def MEM(ins_String):
     print("MEM")
 
 def WB(ins_String):
+#    pprint(ins_String)
     if ins_String["ins_type"] == 0:
         regList[ins_String["ins_rd"]]["in_use"] = False
         reg_Phase[4]["Rn"] = reg_Phase[3]["MEM/WB.ALUOUTPUT"]
@@ -332,6 +381,8 @@ def WB(ins_String):
         regList[ins_String["ins_rt"]]["in_use"] = False
         reg_Phase[4]["Rn"] = reg_Phase[3]["MEM/WB.ALUOUTPUT"]
         regList[ins_String["ins_rt"]]["regValue"] = reg_Phase[4]["Rn"]
+    elif ins_String["ins_type"] == 1:
+        reg_Phase[4]["Rn"] = None
     else:
         regList[ins_String["ins_rt"]]["in_use"] = False
         reg_Phase[4]["Rn"] = None
@@ -343,7 +394,7 @@ def WB(ins_String):
 test_string = """DADDIU R1, R0, #1000
 DADDIU R2, R0, #0000
 DADDU R3, R1, R2
-BGTZC R3, L1
+J L1
 DADDU R3, R1, R1
 DADDIU R3, R0, #0000
 XORI R1, R2, #1000
@@ -459,14 +510,14 @@ if __name__ == '__main__':
     while not if_insError and not if_paramError and count < len(ins_String):
         # Checks if Instruction is valid
         if ins_String[count]["inst_String"].split(" ")[0] in ins_List:
-            type_Inst = {0 : LD_SD_REGEX, 1 : LD_SD_REGEX, 2 : DADDIU_XORI_REGEX, 3 : DADDIU_XORI_REGEX, 4 : DADDU_SLT_REGEX, 5 : DADDU_SLT_REGEX, 6 : BGTZC_J_REGEX, 7 : BGTZC_J_REGEX}
+            type_Inst = {0 : LD_SD_REGEX, 1 : LD_SD_REGEX, 2 : DADDIU_XORI_REGEX, 3 : DADDIU_XORI_REGEX, 4 : DADDU_SLT_REGEX, 5 : DADDU_SLT_REGEX, 6 : BGTZC_REGEX, 7 : J_REGEX}
             # Checks if parameter is valid
             if_paramError = type_Inst[ins_String[count]["ins_Num"]](ins_String[count]["inst_String"])
             if if_paramError:
                 print("ERROR: Invalid Parameter @ Line", count + 1)
             else:
                 ins_Format = {}
-                type_Form = {0 : LD_SD_REFORMAT, 1 : LD_SD_REFORMAT, 2 : DADDIU_XORI_REFORMAT, 3 : DADDIU_XORI_REFORMAT, 4 : DADDU_SLT_REFORMAT, 5 : DADDU_SLT_REFORMAT, 6 : BGTZC_J_REFORMAT, 7 : BGTZC_J_REFORMAT}
+                type_Form = {0 : LD_SD_REFORMAT, 1 : LD_SD_REFORMAT, 2 : DADDIU_XORI_REFORMAT, 3 : DADDIU_XORI_REFORMAT, 4 : DADDU_SLT_REFORMAT, 5 : DADDU_SLT_REFORMAT, 6 : BGTZC_REFORMAT, 7 : J_REFORMAT}
                 typenum = ins_List.index(ins_String[count]["inst_String"].split(" ")[0])
                 if typenum == 6:
                     ins_Format = type_Form[ins_List.index(ins_String[count]["inst_String"].split(" ")[0])](ins_String[count]["inst_String"], count)
