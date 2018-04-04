@@ -279,6 +279,7 @@ def IF(ins_String):
     reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
 
     print("IF")
+    return "IF"
 
 def ID(ins_String):
     #---------------------INC--------------------------- tweaked, maybe goods
@@ -342,6 +343,8 @@ def ID(ins_String):
     if not ins_String["if_Stall"]:
         reg_Phase[0].clear()
     print("ID")
+    
+    return "ID"
 
 def EX(ins_String):
     ALUOUT = {}
@@ -355,6 +358,8 @@ def EX(ins_String):
     reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
     reg_Phase[1].clear()
     print("EX")
+    
+    return "EX"
 
 def MEM(ins_String):
     reg_Phase[3]["MEM/WB.IR"] = reg_Phase[2]["EX/MEM.IR"]
@@ -370,6 +375,8 @@ def MEM(ins_String):
 
     reg_Phase[2].clear()
     print("MEM")
+    
+    return "MEM"
 
 def WB(ins_String):
 #    pprint(ins_String)
@@ -389,12 +396,14 @@ def WB(ins_String):
         regList[ins_String["ins_rt"]]["regValue"] = reg_Phase[4]["Rn"]
     reg_Phase[3].clear()
     print("WB")
+    
+    return "WB"
 
 #TEST
 test_string = """DADDIU R1, R0, #1000
 DADDIU R2, R0, #0000
 DADDU R3, R1, R2
-J L1
+BGTZC R3, L1
 DADDU R3, R1, R1
 DADDIU R3, R0, #0000
 XORI R1, R2, #1000
@@ -555,16 +564,18 @@ if __name__ == '__main__':
     done = count = max_Ins = 0
     phase_type = {1: IF, 2: ID, 3: EX, 4: MEM, 5: WB}
     if_Stall = False
+    cycle_array=[]
+    cycle_content={}
     while done != len(ins_String) and not if_insError and not if_paramError:
         print("-----------------Cycle ", count + 1, "-----------------")
 
-
+        cycle_content={}
         for inCount in range(done, max_Ins + 1):
             print("inst # ", inCount , max_Ins)
-
+            
 #            print('inst_Phase',ins_String[inCount]["inst_Phase"])
-            phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
-            print(ins_String[inCount]["inst_String"])
+            cycle_content[inCount]=phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
+            print('current ',ins_String[inCount]["inst_String"])
             if ins_String[inCount]["inst_Phase"] == 5:
                 done += 1
 
@@ -590,7 +601,8 @@ if __name__ == '__main__':
         # print(regList[4])
         # print(regList[5])
 
-
+        cycle_array.append(cycle_content)
+        pprint(cycle_array)
         a = input()
         count += 1
         #if br/j max = target offset; br/j = False
@@ -603,7 +615,7 @@ if __name__ == '__main__':
         # else:
         # 	max = target offset $ one occurence only not looped
         # 	max += 1
-
+        
         print("max: ", max_Ins)
 
 
