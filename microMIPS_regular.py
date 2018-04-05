@@ -2,6 +2,7 @@ import re
 from pprint import pprint
 from GUI_mips import *
 from threading import Thread
+from excelwriter import *
 
 
 ins_List = ["LD", "SD", "DADDIU", "XORI", "DADDU", "SLT", "BGTZC", "J"]
@@ -262,7 +263,7 @@ def BGTZC_J(instruction):
         else:
             cond = 0
 
-    else:
+    elif instruction["ins_Num"] == 7:
         IMM = int(reg_Phase[1]["ID/EX.IMM"], 16)
         output = IMM * 4
         cond = 1
@@ -283,6 +284,7 @@ def IF(ins_String):
     reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
 
     print("IF")
+    pprint(reg_Phase[0])
     return "IF"
 
 def ID(ins_String):
@@ -299,7 +301,7 @@ def ID(ins_String):
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
-                regList[ins_String["ins_rt"]]["in_use"] = True
+#                regList[ins_String["ins_rt"]]["in_use"] = True
                 reg_Phase[1]["ID/EX.IR"] = reg_Phase[0]["IF/ID.IR"]
                 reg_Phase[1]["ID/EX.NPC"] = reg_Phase[0]["IF/ID.NPC"]
                 reg_Phase[1]["ID/EX.B"] = regList[ins_String["ins_rt"]]["regValue"]
@@ -360,6 +362,8 @@ def EX(ins_String):
         reg_Phase[2]["EX/MEM.B"] = reg_Phase[1]["ID/EX.B"]
     reg_Phase[2]["EX/MEM.ALUOUTPUT"] = ALUOUT["ALUOUT"]
     reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
+    ins_String["cond"] = ALUOUT["cond"] 
+    print(ins_String)
     reg_Phase[1].clear()
     print("EX")
     
@@ -404,10 +408,23 @@ def WB(ins_String):
     return "WB"
 
 #TEST
-test_string = """DADDIU R1, R0, #1000
+test_string = """DADDIU R1, R0, #0000
 DADDIU R2, R0, #0000
 DADDU R3, R1, R2
-BGTZC R3, L1
+J L1
+DADDU R3, R1, R1
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+L1: DADDIU R3, R0, #6969
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+XORI R1, R2, #1000
+"""
+test_string1 = """DADDIU R1, R0, #1000
+DADDIU R2, R0, #0000
+BGTZC R1, L1
 DADDU R3, R1, R1
 DADDIU R3, R0, #0000
 XORI R1, R2, #1000
@@ -576,33 +593,68 @@ if __name__ == '__main__':
         cycle_content={}
         
         inCount = done
-        if_branch = False
+        if_branch = False #--BGTZC/J--#
+        if_jumped = False #--BGTZC/J--#
+        maxCount = max_Ins + 1
         while inCount < max_Ins + 1:
             print("inst # ", inCount , max_Ins)
             
-            cycle_content[inCount]=phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
+            phase = phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
+            
             print('current ',ins_String[inCount]["inst_String"])
 #            pprint(ins_String[inCount])
+
+            #--BGTZC/J--#
+            if ins_String[inCount]["if_BR_J"] and ins_String[inCount]["inst_Phase"] <= 4:
+                
+                
+                if ins_String[inCount]["inst_Phase"] < 4:
+                    print("FLUSHING")
+                    if_branch = True
+
+                
+                if not ins_String[inCount]["if_Stall"]:
+                    if inCount+1 < len(ins_String) and ins_String[inCount]["inst_Phase"] == 2:
+                        print('current ',ins_String[inCount+1]["inst_String"])
+                        cycle_content[inCount+1]= phase_type[1](ins_String[inCount+1])
+                    if inCount+2 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 3:
+                        print('current ',ins_String[inCount+2]["inst_String"])
+                        cycle_content[inCount+2]= phase_type[1](ins_String[inCount+2])
+                    if inCount+3 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 4:
+                        print('current ',ins_String[inCount+3]["inst_String"])
+                        cycle_content[inCount+3]= phase_type[1](ins_String[inCount+3])
+            #--BGTZC/J--#
+            
+            
             if ins_String[inCount]["inst_Phase"] == 5:
                 done += 1
+                #--BGTZC/J--#
+                if ins_String[inCount]["if_BR_J"] and ins_String[inCount]["cond"]:
+                    cycle_content[inCount]= phase #Store before jumping lines
+                    if_jumped = True
+                    sanitized = ins_String[inCount]["inst_String"].split(" ")
+                    done = get_line_address(sanitized[len(sanitized)-1])
+                    max_Ins = inCount = done 
+                    inCount -=1
+                #--BGTZC/J--#
             
             if ins_String[inCount]["if_Stall"]:
                 if_Stall = True
                 print("STALLED")
+                cycle_content[inCount]= "*"
                 break
 
             else:
+                if not if_jumped:
+                    cycle_content[inCount]= phase
+                if_jumped = False
                 if_Stall = False
                 ins_String[inCount]["inst_Phase"] += 1
-                
-#            if ins_String[inCount]["if_BR_J"]:
-#                print("THIS IS BRANCH")
-#                if ins_String[inCount]["inst_Phase"] == 5:
-#                    inCount += 1
-#                    
-#                    
-#            else:
+                    
+            
             inCount+= 1
+#        pprint(reg_Phase)
+            #END OF WHILE LOOP
 #        for inCount in range(done, max_Ins + 1):
 #            print("inst # ", inCount , max_Ins)
 #            
@@ -640,7 +692,7 @@ if __name__ == '__main__':
 
         cycle_array.append(cycle_content)
 #        pprint(cycle_array)
-        a = input()
+#        a = input()
         count += 1
         #if br/j max = target offset; br/j = False
         if max_Ins + 1 < len(ins_String) and not if_Stall and not if_branch:
@@ -654,6 +706,8 @@ if __name__ == '__main__':
         # 	max += 1
         
         print("max: ", max_Ins)
+    pprint(cycle_array)
+    Print_to_xlsx(cycle_array)
 
 
 #if COND == 1 
