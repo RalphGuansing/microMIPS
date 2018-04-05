@@ -168,10 +168,10 @@ class Tabs(QtWidgets.QGridLayout):
         
     
     
-# def run():
+#def run():
 #    app = QtWidgets.QApplication(sys.argv)
 #    GUI = Window()
 #    GUI.show()
 #    sys.exit(app.exec())
-
+#
 #run()       

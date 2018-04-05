@@ -274,7 +274,11 @@ def BGTZC_J(instruction):
 
 
 def IF(ins_String):
-    #if br/j if_br_j = True
+    #if B or J
+    if ins_String["ins_type"] == 1:
+        ins_String["if_BR_J"] = True
+        
+    
     reg_Phase[0]["IF/ID.IR"] = ins_String["ins_Opcode"]
     reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
 
@@ -570,19 +574,18 @@ if __name__ == '__main__':
         print("-----------------Cycle ", count + 1, "-----------------")
 
         cycle_content={}
-        for inCount in range(done, max_Ins + 1):
+        
+        inCount = done
+        if_branch = False
+        while inCount < max_Ins + 1:
             print("inst # ", inCount , max_Ins)
             
-#            print('inst_Phase',ins_String[inCount]["inst_Phase"])
             cycle_content[inCount]=phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
             print('current ',ins_String[inCount]["inst_String"])
+#            pprint(ins_String[inCount])
             if ins_String[inCount]["inst_Phase"] == 5:
                 done += 1
-
-
-            #if branch
-            #if_br = True
-
+            
             if ins_String[inCount]["if_Stall"]:
                 if_Stall = True
                 print("STALLED")
@@ -591,6 +594,40 @@ if __name__ == '__main__':
             else:
                 if_Stall = False
                 ins_String[inCount]["inst_Phase"] += 1
+                
+#            if ins_String[inCount]["if_BR_J"]:
+#                print("THIS IS BRANCH")
+#                if ins_String[inCount]["inst_Phase"] == 5:
+#                    inCount += 1
+#                    
+#                    
+#            else:
+            inCount+= 1
+#        for inCount in range(done, max_Ins + 1):
+#            print("inst # ", inCount , max_Ins)
+#            
+##            print('inst_Phase',ins_String[inCount]["inst_Phase"])
+#        
+#            cycle_content[inCount]=phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
+#            print('current ',ins_String[inCount]["inst_String"])
+#            pprint(ins_String[inCount])
+#            if ins_String[inCount]["inst_Phase"] == 5:
+#                done += 1
+#            
+#
+#            #if branch
+#            #if_br = True
+#            
+#            if ins_String[inCount]["if_Stall"]:
+#                if_Stall = True
+#                print("STALLED")
+#                break
+#
+#            else:
+#                if_Stall = False
+#                ins_String[inCount]["inst_Phase"] += 1
+##                if ins_String[inCount]["if_BR_J"]:
+##                    break
 
 
         # print(reg_Phase)
@@ -602,11 +639,11 @@ if __name__ == '__main__':
         # print(regList[5])
 
         cycle_array.append(cycle_content)
-        pprint(cycle_array)
+#        pprint(cycle_array)
         a = input()
         count += 1
         #if br/j max = target offset; br/j = False
-        if max_Ins + 1 < len(ins_String) and not if_Stall:
+        if max_Ins + 1 < len(ins_String) and not if_Stall and not if_branch:
             #and not if_cond
             #if cond max = target offset
             #if_cond == true
