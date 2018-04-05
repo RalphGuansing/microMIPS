@@ -1,1 +1,4 @@
 # microMIPS
+
+## pip install:
+xlwings
