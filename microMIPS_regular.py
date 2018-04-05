@@ -276,15 +276,15 @@ def BGTZC_J(instruction):
 
 def IF(ins_String):
     #if B or J
-    if ins_String["ins_type"] == 1:
-        ins_String["if_BR_J"] = True
         
     
     reg_Phase[0]["IF/ID.IR"] = ins_String["ins_Opcode"]
     reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
+    if ins_String["ins_type"] == 1:
+        ins_String["if_BR_J"] = True
 
     print("IF")
-    pprint(reg_Phase[0])
+#    pprint(reg_Phase[0])
     return "IF"
 
 def ID(ins_String):
@@ -363,8 +363,14 @@ def EX(ins_String):
     reg_Phase[2]["EX/MEM.ALUOUTPUT"] = ALUOUT["ALUOUT"]
     reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
     ins_String["cond"] = ALUOUT["cond"] 
-    print(ins_String)
+    
+    
+#    print(ins_String)
     reg_Phase[1].clear()
+    
+#    if ins_String["ins_Num"] == 7 or ins_String["ins_Num"] == 6: #for debugging BGTZC/J
+#        pprint(reg_Phase[2])
+        
     print("EX")
     
     return "EX"
