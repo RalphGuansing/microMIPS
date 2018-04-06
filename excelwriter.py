@@ -4,7 +4,7 @@ def Print_to_xlsx(cycle_array):
 #    components = Component.objects.filter(invoice = invoice)
     
     #USING MICROSOFT EXCEL xlsx
-    wb = xlwings.Book(r'C:\Users\Ralph\Documents\GitHub\microMIPS\excelwriter.xlsx')
+    wb = xlwings.Book(r'C:\Users\Ralph Vincent\Documents\GitHub\microMIPS\excelwriter.xlsx')
     sht = wb.sheets['Sheet1']
     
 #    #charged to
