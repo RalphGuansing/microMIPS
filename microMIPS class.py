@@ -603,6 +603,7 @@ class MIPS:
             print("-----------------Cycle ", count + 1, "-----------------")
 
             cycle_content={}
+            cycle_phase={}
 
             inCount = done
             if_branch = False #--BGTZC/J--#
@@ -628,13 +629,19 @@ class MIPS:
                     if not ins_String[inCount]["if_Stall"]:
                         if inCount+1 < len(ins_String) and ins_String[inCount]["inst_Phase"] == 2:
                             print('current ',ins_String[inCount+1]["inst_String"])
-                            cycle_content[inCount+1]= phase_type[1](ins_String[inCount+1])
+                            flush_phase = phase_type[1](ins_String[inCount+1])
+                            cycle_content[inCount+1]
+                            cycle_phase[inCount+1]
                         if inCount+2 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 3:
                             print('current ',ins_String[inCount+2]["inst_String"])
-                            cycle_content[inCount+2]= phase_type[1](ins_String[inCount+2])
+                            flush = phase_type[1](ins_String[inCount+2])
+                            cycle_content[inCount+2]
+                            cycle_phase[inCount+2]
                         if inCount+3 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 4:
                             print('current ',ins_String[inCount+3]["inst_String"])
-                            cycle_content[inCount+3]= phase_type[1](ins_String[inCount+3])
+                            flush_phase = phase_type[1](ins_String[inCount+3])
+                            cycle_content[inCount+3]
+                            cycle_phase[inCount+3]
                 #--BGTZC/J--#
 
 
@@ -685,7 +692,8 @@ class MIPS:
             print("max: ", max_Ins)
         pprint(cycle_array)
         pprint(code_line)
-        Print_to_xlsx(cycle_array,code_line)
+        pprint(self.reg_Phase)
+#        Print_to_xlsx(cycle_array,code_line)
 
 if __name__ == "__main__":
     a = MIPS()
