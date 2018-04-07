@@ -528,12 +528,13 @@ class MIPS:
         elif ins_String["ins_type"] == 1:
             self.reg_Phase[4]["Rn"] = None
         else:
-            self.regList[ins_String["ins_rt"]]["in_use"] = False
-#            self.reg_Phase[4]["Rn"] = None
-            self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
-            print("IN WB ", self.regList[ins_String["ins_rt"]]["regValue"])
-            print("IN WB ", self.reg_Phase[4]["Rn"])
-            self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
+            if ins_String["ins_Num"] == 0:
+                self.regList[ins_String["ins_rt"]]["in_use"] = False
+                self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
+                self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
+            else:
+                pass
+            
         self.reg_Phase[3].clear()
         print("WB")
         
