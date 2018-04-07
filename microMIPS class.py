@@ -372,7 +372,8 @@ class MIPS:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
-                self.regList[ins_String["ins_rt"]]["in_use"] = True
+                if ins_String["ins_Num"] == 0: 
+                    self.regList[ins_String["ins_rt"]]["in_use"] = True
                 self.reg_Phase[1]["ID/EX.IR"] = self.reg_Phase[0]["IF/ID.IR"]
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_base"]]["regValue"]
@@ -462,7 +463,7 @@ class MIPS:
                         print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
 
                 self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
-                print(reg_Phase[3]["MEM/WB.LMD"])
+#                print(reg_Phase[3]["MEM/WB.LMD"])
             
             else:
                 #SD operation
@@ -529,6 +530,7 @@ class MIPS:
             self.reg_Phase[4]["Rn"] = None
         else:
             if ins_String["ins_Num"] == 0:
+#            print("in WB ", ins_String["ins_Num"])
                 self.regList[ins_String["ins_rt"]]["in_use"] = False
                 self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
                 self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
