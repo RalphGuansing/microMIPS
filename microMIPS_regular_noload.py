@@ -7,21 +7,9 @@ from excelwriter import *
 
 ins_List = ["LD", "SD", "DADDIU", "XORI", "DADDU", "SLT", "BGTZC", "J"]
 regList = []
-memList= []
 
 reg_Phase = ({}, {}, {}, {}, {})
-address_mem = 0b0000000000000000
-address_mem_hex = hex(address_mem).split('x')[-1].zfill(4)
 
-#Memory	
-while int(address_mem_hex, 16) < int("1000" , 16):
-	mem = {}
-	mem["memValue"] = hex(0).split('x')[-1].zfill(2)
-	mem["memAddress"] = address_mem_hex
-	address_mem += 1
-	address_mem_hex = hex(address_mem).split('x')[-1].zfill(4)
-	memList.append(mem)
-    
 for regNum in range(0, 32):
     reg = {}
     reg["regValue"] = hex(0).split('x')[-1].zfill(16)
@@ -44,7 +32,7 @@ def LD_SD_REGEX(expression):
     sanitized = expression.split(" ")
     del sanitized[0]
     sanitized = " ".join(sanitized)
-    if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s0|0)[0-9A-Fa-f]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized):
+    if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s1|1)[0-9A-F]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized):
         return False
     else:
         return True
@@ -128,7 +116,7 @@ def LD_SD_REFORMAT(expression):
     bin_Opcode.append(regList[rt]["regNum"])
 
     for x in range(0, 4):
-        bin_Opcode.append(bin(int(offset[x], 16)).split('b')[-1].zfill(4))
+        bin_Opcode.append(bin(int(offset[x])).split('b')[-1].zfill(4))
 
     hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
     print(expression)
@@ -224,31 +212,22 @@ def J_REFORMAT(expression):
 #---------------------INC---------------------------
 
 def LD_SD(instruction):
-    if instruction["ins_Num"] == 0:
-     	#LD operation
-        output = int(regList[instruction["ins_base"]]["regValue"], 16) + int(instruction["ins_offset"], 16)
+    # if instruction["ins_Num"] == 0:
+    # 	#LD operation
 
-    else:
-     	#SD operation
-        output = int(regList[instruction["ins_base"]]["regValue"], 16) + int(instruction["ins_offset"], 16)
-        
-    output = hex(output).split('x')[-1].zfill(4)
-    cond = 0   
-    
-    return {"ALUOUT": output, "cond": cond}
+    # else:
+    # 	#SD operation
+    pass
 
 def DADDIU_XORI(instruction):
     if instruction["ins_Num"] == 2:
         #DADDIU operation
-        print("A = ",int(regList[instruction["ins_rs"]]["regValue"],16))
-        print("Imm = ",int(instruction["ins_imm"],16))
         output = int(regList[instruction["ins_rs"]]["regValue"], 16) + int(instruction["ins_imm"], 16)
     else:
         #XORI operation
         output = int(regList[instruction["ins_rs"]]["regValue"], 16) ^ int(instruction["ins_imm"], 16)
-        
+
     output = hex(output).split('x')[-1].zfill(16)
-    print("A+Imm = ",output)
     cond = 0
     return {"ALUOUT": output, "cond": cond}
 
@@ -262,7 +241,6 @@ def DADDU_SLT(instruction):
             output = int(regList[instruction["ins_rs"]]["regValue"], 16)
         else:
             output = 0
-            
     output = hex(output).split('x')[-1].zfill(16)
     cond = 0
     return {"ALUOUT": output, "cond": cond}
@@ -380,11 +358,8 @@ def EX(ins_String):
     ALUOUT = type_Inst[ins_String["ins_Num"]](ins_String)
 
     reg_Phase[2]["EX/MEM.IR"] = reg_Phase[1]["ID/EX.IR"]
-    
     if ins_String["ins_Num"] != 7:
         reg_Phase[2]["EX/MEM.B"] = reg_Phase[1]["ID/EX.B"]
-
-        
     reg_Phase[2]["EX/MEM.ALUOUTPUT"] = ALUOUT["ALUOUT"]
     reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
     ins_String["cond"] = ALUOUT["cond"] 
@@ -403,95 +378,14 @@ def EX(ins_String):
 def MEM(ins_String):
     reg_Phase[3]["MEM/WB.IR"] = reg_Phase[2]["EX/MEM.IR"]
     reg_Phase[3]["MEM/WB.ALUOUTPUT"] = reg_Phase[2]["EX/MEM.ALUOUTPUT"]
-    reg_Phase[3]["MEM/WB.LMD"] = ""
-    reg_Phase[3]["MEM/WB.B"] = reg_Phase[2]["EX/MEM.B"]
-    if ins_String["ins_type"] != 3:
+
+    if ins_String["ins_type"] != 1:
         reg_Phase[3]["MEM/WB.RANGE"] = None
         reg_Phase[3]["MEM/WB.LMD"] = None
 
     else:
-        if ins_String["ins_Num"] == 0:
-            #LD operation
-            
-            mem = reg_Phase[3]["MEM/WB.ALUOUTPUT"]
-            print(mem)
-            
-            for i in range (len(memList)):
-                if(memList[i]["memAddress"] == mem):
-                    
-                    byte1= memList[i]["memValue"]
-                    print(memList[i]["memValue"],memList[i]["memAddress"])
-                    
-                    byte2= memList[i+1]["memValue"]
-                    print(memList[i+1]["memValue"],memList[i+1]["memAddress"])
-                    
-                    byte3= memList[i+2]["memValue"]
-                    print(memList[i+2]["memValue"],memList[i+2]["memAddress"])
-                    
-                    byte4= memList[i+3]["memValue"]
-                    print(memList[i+3]["memValue"],memList[i+3]["memAddress"])
-                    
-                    byte5= memList[i+4]["memValue"]
-                    print(memList[i+4]["memValue"],memList[i+4]["memAddress"])
-                    
-                    byte6= memList[i+5]["memValue"]
-                    print(memList[i+5]["memValue"],memList[i+5]["memAddress"])
-                    
-                    byte7= memList[i+6]["memValue"]
-                    print(memList[i+6]["memValue"],memList[i+6]["memAddress"])
-                    
-                    byte8= memList[i+7]["memValue"]
-                    print(memList[i+7]["memValue"],memList[i+7]["memAddress"])
-                    
-            reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
-            print(reg_Phase[3]["MEM/WB.LMD"])
-            
-        else:
-            #SD operation
-            
-            reg= str(reg_Phase[3]["MEM/WB.B"])
-            print(reg)
-            mem = reg_Phase[3]["MEM/WB.ALUOUTPUT"]
-            print(mem)
-            
-            byte1 = reg[14:16]
-            print(byte1)
-            byte2 = reg[12:14]
-            print(byte2)
-            byte3 = reg[10:12]
-            print(byte3)
-            byte4 = reg[8:10]
-            print(byte3)
-            byte5 = reg[6:8]
-            print(byte4)
-            byte6 = reg[4:6]
-            print(byte5)
-            byte7 = reg[2:4]
-            print(byte6)
-            byte8 = reg[0:2]
-            print(byte7)
-            
-            for i in range (len(memList)):
-                if(memList[i]["memAddress"] == mem):
-                    memList[i]["memValue"]=byte1
-                    memList[i+1]["memValue"]=byte2
-                    memList[i+2]["memValue"]=byte3
-                    memList[i+3]["memValue"]=byte4
-                    memList[i+4]["memValue"]=byte5
-                    memList[i+5]["memValue"]=byte6
-                    memList[i+6]["memValue"]=byte7
-                    memList[i+7]["memValue"]=byte8
-
-                    print(memList[i]["memValue"],memList[i]["memAddress"])
-                    print(memList[i+1]["memValue"],memList[i+1]["memAddress"])
-                    print(memList[i+2]["memValue"],memList[i+2]["memAddress"])
-                    print(memList[i+3]["memValue"],memList[i+3]["memAddress"])
-                    print(memList[i+4]["memValue"],memList[i+4]["memAddress"])
-                    print(memList[i+5]["memValue"],memList[i+5]["memAddress"])
-                    print(memList[i+6]["memValue"],memList[i+6]["memAddress"])
-                    print(memList[i+7]["memValue"],memList[i+7]["memAddress"])
-
-                    
+        #SD/LD stuff
+        pass
 
     reg_Phase[2].clear()
     print("MEM")
@@ -512,20 +406,15 @@ def WB(ins_String):
         reg_Phase[4]["Rn"] = None
     else:
         regList[ins_String["ins_rt"]]["in_use"] = False
-        reg_Phase[4]["Rn"] = reg_Phase[3]["MEM/WB.LMD"]
+        reg_Phase[4]["Rn"] = None
         regList[ins_String["ins_rt"]]["regValue"] = reg_Phase[4]["Rn"]
-        print(regList[ins_String["ins_rt"]])
-        print(regList[ins_String["ins_rt"]]["regValue"])
-        
     reg_Phase[3].clear()
     print("WB")
     
     return "WB"
 
 #TEST
-test_string = """DADDIU R2, R0,#1000
-SD R2, 0F00(R0)"""
-test_string2 = """DADDIU R1, R0, #0000
+test_string = """DADDIU R1, R0, #0000
 DADDIU R2, R0, #0000
 DADDU R3, R1, R2
 BGTZC R1, L1
@@ -617,9 +506,9 @@ def get_line_address(offset):
 
 
 if __name__ == '__main__':
-    
+
     #cleaning code.
-    clean_code = find_address(test_string1)
+    clean_code = find_address(test_string)
 
     ins_String = []
     input_Phase = True
@@ -824,12 +713,7 @@ if __name__ == '__main__':
         
         print("max: ", max_Ins)
     pprint(cycle_array)
-    #Print_to_xlsx(cycle_array)
-    #print(reg_Phase[2])
-    #print(regList[1])
-    #print(regList[2])
-    #print(memList)
-    #print(ins_String)
+    Print_to_xlsx(cycle_array)
 
 
 #if COND == 1 

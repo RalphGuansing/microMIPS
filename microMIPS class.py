@@ -33,6 +33,23 @@ class MIPS:
         self.regList = []
 
         self.reg_Phase = ({}, {}, {}, {}, {})
+        
+        #-----KIEF-----
+        self.memList= []
+        self.address_mem = 0b0000000000000000
+        self.address_mem_hex = hex(self.address_mem).split('x')[-1].zfill(4)
+
+        #Memory	
+        while int(self.address_mem_hex, 16) < int("1000" , 16):
+            self.mem = {}
+            self.mem["memValue"] = hex(0).split('x')[-1].zfill(2)
+            self.mem["memAddress"] = self.address_mem_hex
+            self.address_mem += 1
+            self.address_mem_hex = hex(self.address_mem).split('x')[-1].zfill(4)
+            self.memList.append(self.mem)
+        
+        #-----KIEF-----
+        
 
         for regNum in range(0, 32):
             reg = {}
@@ -58,7 +75,8 @@ class MIPS:
         sanitized = expression.split(" ")
         del sanitized[0]
         sanitized = " ".join(sanitized)
-        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s1|1)[0-9A-F]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized):
+#        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s1|1)[0-9A-F]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized): OLD
+        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s0|0)[0-9A-Fa-f]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized):
             return False
         else:
             return True
@@ -142,7 +160,8 @@ class MIPS:
         bin_Opcode.append(self.regList[rt]["regNum"])
 
         for x in range(0, 4):
-            bin_Opcode.append(bin(int(offset[x])).split('b')[-1].zfill(4))
+#            bin_Opcode.append(bin(int(offset[x])).split('b')[-1].zfill(4)) old
+            bin_Opcode.append(bin(int(offset[x], 16)).split('b')[-1].zfill(4))
 
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
         print(expression)
@@ -234,12 +253,19 @@ class MIPS:
         return {"ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": True, "if_Imm": False, "if_LSD": False}
 
     def LD_SD(self, instruction):
-        # if instruction["ins_Num"] == 0:
-        # 	#LD operation
+        if instruction["ins_Num"] == 0:
+            #LD operation
+            output = int(self.regList[instruction["ins_base"]]["regValue"], 16) + int(instruction["ins_offset"], 16)
+        else:
+            #SD operation
+            output = int(self.regList[instruction["ins_base"]]["regValue"], 16) + int(instruction["ins_offset"], 16)
 
-        # else:
-        # 	#SD operation
-        pass
+        output = hex(output).split('x')[-1].zfill(4)
+        cond = 0   
+
+        return {"ALUOUT": output, "cond": cond}
+
+        
 
     def DADDIU_XORI(self, instruction):
         if instruction["ins_Num"] == 2:
@@ -247,6 +273,7 @@ class MIPS:
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(instruction["ins_imm"], 16)
         else:
             #XORI operation
+            
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) ^ int(instruction["ins_imm"], 16)
 
         output = hex(output).split('x')[-1].zfill(16)
@@ -393,13 +420,96 @@ class MIPS:
         self.reg_Phase[3]["MEM/WB.IR"] = self.reg_Phase[2]["EX/MEM.IR"]
         self.reg_Phase[3]["MEM/WB.ALUOUTPUT"] = self.reg_Phase[2]["EX/MEM.ALUOUTPUT"]
 
-        if ins_String["ins_type"] != 1:
+#        if ins_String["ins_type"] != 1:
+        self.reg_Phase[3]["MEM/WB.LMD"] = ""
+        self.reg_Phase[3]["MEM/WB.B"] = self.reg_Phase[2]["EX/MEM.B"]
+        if ins_String["ins_type"] != 3:
             self.reg_Phase[3]["MEM/WB.RANGE"] = None
             self.reg_Phase[3]["MEM/WB.LMD"] = None
 
         else:
-            #SD/LD stuff
-            pass
+            if ins_String["ins_Num"] == 0:
+                #LD operation
+
+                mem = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
+                print(mem)
+
+                for i in range (len(self.memList)):
+                    if(self.memList[i]["memAddress"] == mem):
+
+                        byte1= self.memList[i]["memValue"]
+                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
+
+                        byte2= self.memList[i+1]["memValue"]
+                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
+
+                        byte3= self.memList[i+2]["memValue"]
+                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
+
+                        byte4= self.memList[i+3]["memValue"]
+                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
+
+                        byte5= self.memList[i+4]["memValue"]
+                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
+
+                        byte6= self.memList[i+5]["memValue"]
+                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
+
+                        byte7= self.memList[i+6]["memValue"]
+                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
+
+                        byte8= self.memList[i+7]["memValue"]
+                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
+
+                self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
+                print(reg_Phase[3]["MEM/WB.LMD"])
+            
+            else:
+                #SD operation
+
+                reg= str(self.reg_Phase[3]["MEM/WB.B"])
+                print(reg)
+                mem = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
+                print(mem)
+
+                byte1 = reg[14:16]
+                print(byte1)
+                byte2 = reg[12:14]
+                print(byte2)
+                byte3 = reg[10:12]
+                print(byte3)
+                byte4 = reg[8:10]
+                print(byte3)
+                byte5 = reg[6:8]
+                print(byte4)
+                byte6 = reg[4:6]
+                print(byte5)
+                byte7 = reg[2:4]
+                print(byte6)
+                byte8 = reg[0:2]
+                print(byte7)
+
+                for i in range (len(self.memList)):
+                    if(self.memList[i]["memAddress"] == mem):
+                        self.memList[i]["memValue"]=byte1
+                        self.memList[i+1]["memValue"]=byte2
+                        self.memList[i+2]["memValue"]=byte3
+                        self.memList[i+3]["memValue"]=byte4
+                        self.memList[i+4]["memValue"]=byte5
+                        self.memList[i+5]["memValue"]=byte6
+                        self.memList[i+6]["memValue"]=byte7
+                        self.memList[i+7]["memValue"]=byte8
+
+                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
+                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
+                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
+                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
+                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
+                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
+                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
+                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
+                
+                self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
 
         self.reg_Phase[2].clear()
         print("MEM")
@@ -419,7 +529,10 @@ class MIPS:
             self.reg_Phase[4]["Rn"] = None
         else:
             self.regList[ins_String["ins_rt"]]["in_use"] = False
-            self.reg_Phase[4]["Rn"] = None
+#            self.reg_Phase[4]["Rn"] = None
+            self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
+            print("IN WB ", self.regList[ins_String["ins_rt"]]["regValue"])
+            print("IN WB ", self.reg_Phase[4]["Rn"])
             self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
         self.reg_Phase[3].clear()
         print("WB")
@@ -585,7 +698,8 @@ class MIPS:
     def Update_ui(self,main_layout,cycle_array):
         pipeline_map = main_layout.pipelineMap
 #        pipeline_map.setColumnCount(1)
-        
+#        pprint(self.cycle_content_array[7][3])    
+    
         if not self.if_updated_ui:
             pipeline_map.setRowCount(0)
             pipeline_map.setColumnCount(0)
@@ -598,11 +712,11 @@ class MIPS:
         for nCtr, cycle in enumerate(cycle_array):
             if(pipeline_map.columnCount() < len(cycle_array)):
                 pipeline_map.insertColumn(pipeline_map.columnCount())
-            pprint(cycle)
-            print("phase in Cycle", nCtr +1,)
+#            pprint(cycle)
+#            print("phase in Cycle", nCtr +1,)
             for nCtr_2 in range(0, len(self.code_line)):
                 if nCtr_2 in cycle:
-                    print(cycle[nCtr_2])
+#                    print(cycle[nCtr_2])
                     pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))     
         
         print("in update ui")
@@ -620,12 +734,6 @@ class MIPS:
         if_Stall = False
         
         
-#        WRONG FOR SINGLE INSTRUCTION
-#        if if_Single:
-#            if self.done+1 != len(self.ins_String):
-#                highest = self.done +1
-#        else:
-#            highest = len(self.ins_String)
         highest = len(self.ins_String)
         
         
