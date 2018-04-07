@@ -368,7 +368,7 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
                 #get A, B and imm
         elif ins_String["ins_type"] == 3: #SD/LD
-            if self.regList[ins_String["ins_base"]]["in_use"]:
+            if self.regList[ins_String["ins_base"]]["in_use"] or self.regList[ins_String["ins_rt"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
