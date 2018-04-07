@@ -1,12 +1,13 @@
 import sys
 from PyQt5 import QtWidgets
-
+from pprint import pprint
+from functools import partial
 
 class Window(QtWidgets.QMainWindow):
     
-    def __init__(self, parent= None):
+    def __init__(self,MIPS, parent= None ):
         super(Window, self).__init__()
-        
+        self.MIPS = MIPS
         self.setGeometry(8,50,1500,500)
         self.setWindowTitle("microMIPS")
         
@@ -31,20 +32,25 @@ class Window(QtWidgets.QMainWindow):
         
     def set_view(self):
         self.setCentralWidget(self.form_widget)
-        self.extractAction2.triggered.connect(self.print_text)
+        self.form_widget.layout.load_tab.layout.bLoad.clicked.connect(self.print_text)
+        
+        self.extractAction1.triggered.connect(partial(self.MIPS.start_cycle,True,self.form_widget.layout.main_tab.layout))
+        self.extractAction2.triggered.connect(partial(self.MIPS.start_cycle,False,self.form_widget.layout.main_tab.layout))
+        
         
     #functionalities
+    
     def print_text(self):
         #for testing, able to read text by line
         raw_code =  self.form_widget.layout.load_tab.layout.textEdit.toPlainText()
-        self.code = raw_code.split('\n')
         
 #        print(code)
-        
-        self.MIPS.start(self.code)
-        self.opcodes = self.MIPS.opcodes
+        pprint(raw_code)
+        self.MIPS.start_opcode(raw_code)
+        self.opcodes = self.MIPS.opcode
+        self.code_line = self.MIPS.code_line
         self.output_to_gui()
-        for i,line in enumerate(self.code):
+        for i,line in enumerate(self.code_line):
             print('Line ' , i+1 , ' ' ,line)
             
             
@@ -53,7 +59,7 @@ class Window(QtWidgets.QMainWindow):
         table = self.form_widget.layout.load_tab.layout.opcodes
         table.setRowCount(0)
         
-        for i,line in enumerate(self.code):
+        for i,line in enumerate(self.code_line):
             table.insertRow(table.rowCount())
             table.setItem(i, 0,QtWidgets.QTableWidgetItem(line))
             table.setItem(i, 7,QtWidgets.QTableWidgetItem(self.opcodes[i]))
@@ -81,6 +87,20 @@ class loadview(QtWidgets.QVBoxLayout):
         label1 = QtWidgets.QLabel('Please Enter Code Here')
         
         self.textEdit = QtWidgets.QTextEdit()
+        self.textEdit.setText("""DADDIU R1, R0, #0000
+DADDIU R2, R0, #0000
+DADDU R3, R1, R2
+BGTZC R1, L1
+DADDU R3, R1, R1
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+L1: DADDIU R3, R0, #6969
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+DADDIU R3, R0, #0000
+XORI R1, R2, #1000
+""")
         
         self.opcodes = QtWidgets.QTableWidget()
         self.opcodes.setColumnCount(8)
@@ -107,13 +127,38 @@ class loadview(QtWidgets.QVBoxLayout):
         
         
         
-        self.h_box = QtWidgets.QHBoxLayout()
+        self.h_box = QtWidgets.QGridLayout()
         
-        self.h_box.addWidget(self.textEdit)
-        self.h_box.addWidget(self.opcodes)
+        self.h_box.setColumnStretch(1,1)
+        self.h_box.addWidget(self.textEdit,0,1)
+        self.h_box.addWidget(self.opcodes,0,2)
+        self.h_box.setColumnStretch(2,2)
+        
+        self.bLoad = QtWidgets.QPushButton("LOAD")
+        self.bLoad.setFixedWidth(100)
+        self.bLoad.setStyleSheet("""QPushButton { font-size: 14pt; padding: 10px; color: #fff; background-color: #ffc107; border-color: #4cae4c;
+                                                    border-radius: 5px;
+                                                    margin-top: 10px;
+                                                    }
+                                        QPushButton:hover {background-color: #fdcb35; border-color: #fdcb35;}""")
+        
+        self.bStart = QtWidgets.QPushButton("START")
+        self.bStart.setFixedWidth(100)
+        self.bStart.setStyleSheet("""QPushButton { font-size: 14pt; padding: 10px; color: #fff; background-color: #5cb85c; border-color: #4cae4c;
+                                                    border-radius: 5px;
+                                                    margin-top: 10px;
+                                                    }
+                                        QPushButton:hover {background-color: #4baa4b; border-color: #409140;}""")
+        self.grid_layout = QtWidgets.QGridLayout()
+#        self.h_box_2.setSpacing(0)
+        self.grid_layout.setColumnStretch(0,1)
+        self.grid_layout.addWidget(self.bLoad,0,1)
+        self.grid_layout.addWidget(self.bStart,0,2)
+        self.grid_layout.setColumnStretch(3,1)
         
         self.addWidget(label1)
         self.addLayout(self.h_box)
+        self.addLayout(self.grid_layout)
 
 class mainview(QtWidgets.QVBoxLayout):
     def __init__(self, parent=None):
@@ -122,11 +167,11 @@ class mainview(QtWidgets.QVBoxLayout):
         label2 = QtWidgets.QLabel('Pipeline')
         
         self.pipelineMap = QtWidgets.QTableWidget()
-        self.pipelineMap.setColumnCount(1)
+#        self.pipelineMap.setColumnCount(1)
 #        self.pipelineMap.setRowCount(5)        
 #        self.pipelineMap.setHorizontalHeaderLabels(["Instruction","1","2","3"])
-        self.pipelineMap.setHorizontalHeaderLabels(["Instruction"])
-        self.pipelineMap.setColumnWidth(0,150)
+#        self.pipelineMap.setHorizontalHeaderLabels(["Instruction"])
+#        self.pipelineMap.setColumnWidth(0,150)
 #        self.pipelineMap.setColumnWidth(1,50)
 #        self.pipelineMap.setColumnWidth(2,50)
 #        self.pipelineMap.setColumnWidth(3,50)

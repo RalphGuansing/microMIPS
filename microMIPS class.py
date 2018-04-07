@@ -119,7 +119,7 @@ class MIPS:
         bin_Opcode.append(bin(ins_Op[self.ins_List.index(expression.split(" ")[0])]).split('b')[-1].zfill(6))
 
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
-        print(self, expression)
+        print(expression)
         print("OPCODE: ", hex_Opcode, "\n")
 
         return {"ins_rs": rs, "ins_rt": rt, "ins_rd": rd, "Opcode": hex_Opcode, "if_BCJ": False, "if_Imm": False, "if_LSD": False}
@@ -145,7 +145,7 @@ class MIPS:
             bin_Opcode.append(bin(int(offset[x])).split('b')[-1].zfill(4))
 
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
-        print(self, expression)
+        print(expression)
         print("OPCODE: ", hex_Opcode, "\n")
 
         return {"ins_base": base, "ins_rt": rt, "ins_offset": offset, "Opcode": hex_Opcode, "if_BCJ": False, "if_Imm": False, "if_LSD": True}
@@ -171,15 +171,14 @@ class MIPS:
             bin_Opcode.append(bin(int(imm[x])).split('b')[-1].zfill(4))
 
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
-        print(self, expression)
+        print(expression)
         print("OPCODE: ", hex_Opcode, "\n")
 
         return {"ins_rs": rs, "ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": False, "if_Imm": True, "if_LSD": False}
 
-    #---------------------INC---------------------------
     def BGTZC_REFORMAT(self, expression, current_line):
-        print("in BGTZC_REFORMAT")
-        print(self, expression)
+#        print("in BGTZC_REFORMAT")
+        print(expression)
         ins_Op = {0: 0b010111, 1: 0b000010}
         bin_Opcode = []
         bin_Opcode.append(bin(ins_Op[0]).split('b')[-1].zfill(6))
@@ -187,7 +186,7 @@ class MIPS:
 
         sanitized = expression.split(" ")
         del sanitized[0]
-        print(sanitized)
+#        print(sanitized)
 
         rt = int(sanitized[0][:-1][-1:])
 
@@ -211,7 +210,7 @@ class MIPS:
 
     def J_REFORMAT(self, expression):
         print("in J_REFORMAT")
-        print(self, expression)
+        print(expression)
         ins_Op ={0: 0b000010}
         bin_Opcode = []
         bin_Opcode.append(bin(ins_Op[0]).split('b')[-1].zfill(6))
@@ -233,9 +232,6 @@ class MIPS:
 
         rt = ""
         return {"ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": True, "if_Imm": False, "if_LSD": False}
-
-
-    #---------------------INC---------------------------
 
     def LD_SD(self, instruction):
         # if instruction["ins_Num"] == 0:
@@ -301,8 +297,6 @@ class MIPS:
 
 
     def IF(self, ins_String):
-        #if B or J
-
 
         self.reg_Phase[0]["IF/ID.IR"] = ins_String["ins_Opcode"]
         self.reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
@@ -310,13 +304,13 @@ class MIPS:
             ins_String["if_BR_J"] = True
 
         print("IF")
-    #    pprint(self.reg_Phase[0])
-        return "IF"
+        content = dict(self.reg_Phase[0]) 
+
+        return {"phase":"IF", "content":content}
 
     def ID(self, ins_String):
         #---------------------INC--------------------------- tweaked, maybe goods
         if ins_String["ins_type"] == 1: #BGTZC/J
-    #        print("this is the rt", ins_String["ins_rt"])
             if ins_String["ins_rt"] == "":
                 print("THIS IS J")
                 self.reg_Phase[1]["ID/EX.IR"] = self.reg_Phase[0]["IF/ID.IR"]
@@ -327,13 +321,12 @@ class MIPS:
                     ins_String["if_Stall"] = True
                 else:
                     ins_String["if_Stall"] = False
-    #                self.regList[ins_String["ins_rt"]]["in_use"] = True
+                    #self.regList[self.ins_String["ins_rt"]]["in_use"] = True
                     self.reg_Phase[1]["ID/EX.IR"] = self.reg_Phase[0]["IF/ID.IR"]
                     self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                     self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
                     self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
-    #            pprint(self.reg_Phase[1])
-                #get A, B and imm
+                    #get A, B and imm
             #---------------------INC---------------------------
         elif ins_String["ins_type"] == 2: #IMM
             if self.regList[ins_String["ins_rs"]]["in_use"]:
@@ -357,7 +350,7 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_base"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                self.reg_Phase[1]["ID/EX.IMM"] =	ins_String["ins_offset"].zfill(16)
+                self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_offset"].zfill(16)
                 #get A, B and imm
         else: #REGISTERS
             if self.regList[ins_String["ins_rt"]]["in_use"] or self.regList[ins_String["ins_rs"]]["in_use"]:
@@ -369,14 +362,14 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_rs"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                self.reg_Phase[1]["ID/EX.IMM"] =	ins_String["ins_Opcode"][-4:].zfill(16)
+                self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_Opcode"][-4:].zfill(16)
                 #get A, B and imm
 
         if not ins_String["if_Stall"]:
             self.reg_Phase[0].clear()
         print("ID")
-
-        return "ID"
+        content = dict(self.reg_Phase[1])
+        return {"phase":"ID", "content":content}
 
     def EX(self, ins_String):
         ALUOUT = {}
@@ -390,16 +383,11 @@ class MIPS:
         self.reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
         ins_String["cond"] = ALUOUT["cond"] 
 
-
-    #    print(ins_String)
         self.reg_Phase[1].clear()
 
-    #    if ins_String["ins_Num"] == 7 or ins_String["ins_Num"] == 6: #for debugging BGTZC/J
-    #        pprint(self.reg_Phase[2])
-
         print("EX")
-
-        return "EX"
+        content = dict(self.reg_Phase[2])
+        return {"phase":"EX", "content":content}
 
     def MEM(self, ins_String):
         self.reg_Phase[3]["MEM/WB.IR"] = self.reg_Phase[2]["EX/MEM.IR"]
@@ -415,11 +403,10 @@ class MIPS:
 
         self.reg_Phase[2].clear()
         print("MEM")
-
-        return "MEM"
+        content = dict(self.reg_Phase[3])
+        return {"phase":"MEM", "content":content}
 
     def WB(self, ins_String):
-    #    pprint(ins_String)
         if ins_String["ins_type"] == 0:
             self.regList[ins_String["ins_rd"]]["in_use"] = False
             self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
@@ -436,10 +423,9 @@ class MIPS:
             self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
         self.reg_Phase[3].clear()
         print("WB")
-
-        return "WB"
-
-    #TEST
+        
+        content = dict(self.reg_Phase[4])
+        return {"phase":"WB", "content":content}
 
     #EXTRA FUNCTIONS FOR BGTZC
     def find_address(self, code):
@@ -483,8 +469,6 @@ class MIPS:
 
             nCtr += 1
         print(self.clean_code)
-        # print(code_line_splitted)
-        # print(self.address_location)
         print("returning clean code ...")
         return self.clean_code
 
@@ -500,201 +484,260 @@ class MIPS:
 
         return 0
 
-    #def run_UI():
-    #    app = QtWidgets.QApplication(sys.argv)
-    #    GUI = Window()
-    #    GUI.show()
-    #    app.exec()
 
-
-
-    def start(self, dirty_code):
-
+    def start_opcode(self, dirty_code):
+        
+        self.opcode = []
+        
         #cleaning code.
         self.clean_code = self.find_address(dirty_code)
 
-        ins_String = []
-        input_Phase = True
+        self.ins_String = []
+        self.input_Phase = True
 
-        address_int = 0b0001000000000000
+        self.address_int = 0b0001000000000000
 
-        address_hex = hex(address_int).split('x')[-1].zfill(4)
+        self.address_hex = hex(self.address_int).split('x')[-1].zfill(4)
 
         #adjustment made.
         code_line = self.clean_code.split("\n")
         code_line = [x for x in code_line if x]
+        self.code_line = code_line
                 
                 
         nCtr = 0
 
-        # OLD while input_Phase and int(address_hex, 16) < int("2000", 16):
+        # OLD while self.input_Phase and int(self.address_hex, 16) < int("2000", 16):
         while nCtr < len(code_line):
             ins_Input = {}
-            # OLD ins_Input["inst_String"] = input(address_hex + " ").upper()
+            # OLD ins_Input["inst_String"] = input(self.address_hex + " ").upper()
             ins_Input["inst_String"] = code_line[nCtr]
-            ins_Input["inst_add"] = address_hex
-            address_int += 4
-            address_hex = hex(address_int).split('x')[-1].zfill(4).upper()
+            ins_Input["inst_add"] = self.address_hex
+            self.address_int += 4
+            self.address_hex = hex(self.address_int).split('x')[-1].zfill(4).upper()
             ins_Input["inst_Phase"] = 1
             ins_Input["if_Stall"] = False
             ins_Input["if_BR_J"] = False
             nCtr += 1
             if len(ins_Input["inst_String"]) != 0:
                 ins_Input["ins_Num"] = self.ins_List.index(ins_Input["inst_String"].split(" ")[0])
-                ins_String.append(ins_Input)
+                self.ins_String.append(ins_Input)
             else:
-                input_Phase = False
+                self.input_Phase = False
 
-        if_insError = False
-        if_paramError = False
+        self.if_insError = False
+        self.if_paramError = False
         count = 0
 
-        while not if_insError and not if_paramError and count < len(ins_String):
+        while not self.if_insError and not self.if_paramError and count < len(self.ins_String):
             # Checks if Instruction is valid
-            if ins_String[count]["inst_String"].split(" ")[0] in self.ins_List:
+            if self.ins_String[count]["inst_String"].split(" ")[0] in self.ins_List:
                 type_Inst = {0 : self.LD_SD_REGEX, 1 : self.LD_SD_REGEX, 2 : self.DADDIU_XORI_REGEX, 3 : self.DADDIU_XORI_REGEX, 4 : self.DADDU_SLT_REGEX, 5 : self.DADDU_SLT_REGEX, 6 : self.BGTZC_REGEX, 7 : self.J_REGEX}
                 # Checks if parameter is valid
-                if_paramError = type_Inst[ins_String[count]["ins_Num"]](ins_String[count]["inst_String"])
-                if if_paramError:
+                self.if_paramError = type_Inst[self.ins_String[count]["ins_Num"]](self.ins_String[count]["inst_String"])
+                if self.if_paramError:
                     print("ERROR: Invalid Parameter @ Line", count + 1)
                 else:
                     ins_Format = {}
                     type_Form = {0 : self.LD_SD_REFORMAT, 1 : self.LD_SD_REFORMAT, 2 : self.DADDIU_XORI_REFORMAT, 3 : self.DADDIU_XORI_REFORMAT, 4 : self.DADDU_SLT_REFORMAT, 5 : self.DADDU_SLT_REFORMAT, 6 : self.BGTZC_REFORMAT, 7 : self.J_REFORMAT}
-                    typenum = self.ins_List.index(ins_String[count]["inst_String"].split(" ")[0])
+                    typenum = self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])
                     if typenum == 6:
-                        ins_Format = type_Form[self.ins_List.index(ins_String[count]["inst_String"].split(" ")[0])](ins_String[count]["inst_String"], count)
+                        ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"], count)
                     else:
-                        ins_Format = type_Form[self.ins_List.index(ins_String[count]["inst_String"].split(" ")[0])](ins_String[count]["inst_String"])
+                        ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"])
 
-                    ins_String[count]["ins_Opcode"] = ins_Format["Opcode"]
-                    ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
+                    self.opcode.append(ins_Format["Opcode"])
+                    self.ins_String[count]["ins_Opcode"] = ins_Format["Opcode"]
+                    self.ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
 
                     #---------------------INC---------------------------
                     if ins_Format["if_BCJ"]:
-                        ins_String[count]["ins_type"] = 1
-                        ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
-                        ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
+                        self.ins_String[count]["ins_type"] = 1
+                        self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
+                        self.ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
                         #---------------------INC---------------------------
                     elif ins_Format["if_Imm"]:
-                        ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
-                        ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
-                        ins_String[count]["ins_type"] = 2
+                        self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
+                        self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
+                        self.ins_String[count]["ins_type"] = 2
                     elif ins_Format["if_LSD"]:
-                        ins_String[count]["ins_base"] = ins_Format["ins_base"]
-                        ins_String[count]["ins_offset"] = ins_Format["ins_offset"]
-                        ins_String[count]["ins_type"] = 3
+                        self.ins_String[count]["ins_base"] = ins_Format["ins_base"]
+                        self.ins_String[count]["ins_offset"] = ins_Format["ins_offset"]
+                        self.ins_String[count]["ins_type"] = 3
                     else:
-                        ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
-                        ins_String[count]["ins_rd"] = ins_Format["ins_rd"]
-                        ins_String[count]["ins_type"] = 0
+                        self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
+                        self.ins_String[count]["ins_rd"] = ins_Format["ins_rd"]
+                        self.ins_String[count]["ins_type"] = 0
 
 
                     count += 1
             else:
-                if_insError = True
+                self.if_insError = True
                 print("ERROR: Invalid Instruction @ Line", count + 1)
+        self.init_cycle()
+#        self.start_cycle(True)
+    def init_cycle(self):
+        self.if_updated_ui = False
+        self.done = self.count = self.max_Ins = 0
+        self.cycle_array=[]
+        self.cycle_content_array=[]
+        self.cycle_content={}
+    def Update_ui(self,main_layout,cycle_array):
+        pipeline_map = main_layout.pipelineMap
+#        pipeline_map.setColumnCount(1)
+        
+        if not self.if_updated_ui:
+            pipeline_map.setRowCount(0)
+            pipeline_map.setColumnCount(0)
+            print("is updating")
+            for nCtr, code in enumerate(self.code_line):
+                pipeline_map.insertRow(pipeline_map.rowCount())
+#                pipeline_map.setItem(nCtr, 0,QtWidgets.QTableWidgetItem(code))
+                pipeline_map.setVerticalHeaderLabels(self.code_line)
 
-        done = count = max_Ins = 0
+        for nCtr, cycle in enumerate(cycle_array):
+            if(pipeline_map.columnCount() < len(cycle_array)):
+                pipeline_map.insertColumn(pipeline_map.columnCount())
+            pprint(cycle)
+            print("phase in Cycle", nCtr +1,)
+            for nCtr_2 in range(0, len(self.code_line)):
+                if nCtr_2 in cycle:
+                    print(cycle[nCtr_2])
+                    pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))     
+        
+        print("in update ui")
+#        print(self.cycle_array)
+        
+        self.if_updated_ui = True
+
+
+    
+    def start_cycle(self, if_Single, main_layout):
+        pprint(self.ins_String)
+#        print(string)
+        
         phase_type = {1: self.IF, 2: self.ID, 3: self.EX, 4: self.MEM, 5: self.WB}
         if_Stall = False
-        cycle_array=[]
-        cycle_content={}
-        while done != len(ins_String) and not if_insError and not if_paramError:
-            print("-----------------Cycle ", count + 1, "-----------------")
+        
+        
+#        WRONG FOR SINGLE INSTRUCTION
+#        if if_Single:
+#            if self.done+1 != len(self.ins_String):
+#                highest = self.done +1
+#        else:
+#            highest = len(self.ins_String)
+        highest = len(self.ins_String)
+        
+        
+        if_Done_Single = False
+        
+        while self.done != highest and not self.if_insError and not self.if_paramError and not if_Done_Single:
+            print("-----------------Cycle ", self.count + 1, "-----------------")
 
-            cycle_content={}
+            self.cycle_content={}
             cycle_phase={}
 
-            inCount = done
+            inCount = self.done
             if_branch = False #--BGTZC/J--#
             if_jumped = False #--BGTZC/J--#
-            maxCount = max_Ins + 1
-            while inCount < max_Ins + 1:
-                print("inst # ", inCount , max_Ins)
+            maxCount = self.max_Ins + 1
+            while inCount < self.max_Ins + 1:
+                print("inst # ", inCount , self.max_Ins)
 
-                phase = phase_type[ins_String[inCount]["inst_Phase"]](ins_String[inCount])
-
-                print('current ',ins_String[inCount]["inst_String"])
-    #            pprint(ins_String[inCount])
+                phase = phase_type[self.ins_String[inCount]["inst_Phase"]](self.ins_String[inCount])
+#                pprint(phase)
+                print('current ',self.ins_String[inCount]["inst_String"])
+    #            pprint(self.ins_String[inCount])
 
                 #--BGTZC/J--#
-                if ins_String[inCount]["if_BR_J"] and ins_String[inCount]["inst_Phase"] <= 4:
+                if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["inst_Phase"] <= 4:
 
 
-                    if ins_String[inCount]["inst_Phase"] < 4:
+                    if self.ins_String[inCount]["inst_Phase"] < 4:
                         print("FLUSHING")
                         if_branch = True
 
 
-                    if not ins_String[inCount]["if_Stall"]:
-                        if inCount+1 < len(ins_String) and ins_String[inCount]["inst_Phase"] == 2:
-                            print('current ',ins_String[inCount+1]["inst_String"])
-                            flush_phase = phase_type[1](ins_String[inCount+1])
-                            cycle_content[inCount+1]
-                            cycle_phase[inCount+1]
-                        if inCount+2 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 3:
-                            print('current ',ins_String[inCount+2]["inst_String"])
-                            flush = phase_type[1](ins_String[inCount+2])
-                            cycle_content[inCount+2]
-                            cycle_phase[inCount+2]
-                        if inCount+3 < len(ins_String)and ins_String[inCount]["inst_Phase"] == 4:
-                            print('current ',ins_String[inCount+3]["inst_String"])
-                            flush_phase = phase_type[1](ins_String[inCount+3])
-                            cycle_content[inCount+3]
-                            cycle_phase[inCount+3]
+                    if not self.ins_String[inCount]["if_Stall"]:
+                        if inCount+1 < len(self.ins_String) and self.ins_String[inCount]["inst_Phase"] == 2:
+                            print('current ',self.ins_String[inCount+1]["inst_String"])
+                            flush_phase = phase_type[1](self.ins_String[inCount+1])
+                            cycle_phase[inCount+1] = flush_phase["phase"]
+                            self.cycle_content[inCount+1] = flush_phase["content"]
+                        if inCount+2 < len(self.ins_String)and self.ins_String[inCount]["inst_Phase"] == 3:
+                            print('current ',self.ins_String[inCount+2]["inst_String"])
+                            flush_phase = phase_type[1](self.ins_String[inCount+2])
+                            cycle_phase[inCount+2] = flush_phase["phase"]
+                            self.cycle_content[inCount+2] = flush_phase["content"]
+                        if inCount+3 < len(self.ins_String)and self.ins_String[inCount]["inst_Phase"] == 4:
+                            print('current ',self.ins_String[inCount+3]["inst_String"])
+                            flush_phase = phase_type[1](self.ins_String[inCount+3])
+                            cycle_phase[inCount+3] = flush_phase["phase"]
+                            self.cycle_content[inCount+3] = flush_phase["content"]
                 #--BGTZC/J--#
 
 
-                if ins_String[inCount]["inst_Phase"] == 5:
-                    done += 1
+                if self.ins_String[inCount]["inst_Phase"] == 5:
+                    self.done += 1
                     #--BGTZC/J--#
-                    if ins_String[inCount]["if_BR_J"] and ins_String[inCount]["cond"]:
-                        cycle_content[inCount]= phase #Store before jumping lines
+                    if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
+                        cycle_phase[inCount]= phase["phase"] #Store before jumping lines
+                        self.cycle_content[inCount]= phase["content"] #Store before jumping lines
                         if_jumped = True
-                        sanitized = ins_String[inCount]["inst_String"].split(" ")
-                        done = self.get_line_address(sanitized[len(sanitized)-1])
-                        max_Ins = inCount = done 
+                        sanitized = self.ins_String[inCount]["inst_String"].split(" ")
+                        self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
+                        self.max_Ins = inCount = self.done 
                         inCount -=1
                     #--BGTZC/J--#
 
-                if ins_String[inCount]["if_Stall"]:
+                if self.ins_String[inCount]["if_Stall"]:
                     if_Stall = True
                     print("STALLED")
-                    cycle_content[inCount]= "*"
+                    cycle_phase[inCount]= "*"
                     break
 
                 else:
                     if not if_jumped:
-                        cycle_content[inCount]= phase
+                        cycle_phase[inCount]= phase["phase"]
+                        self.cycle_content[inCount]= phase["content"]
                     if_jumped = False
                     if_Stall = False
-                    ins_String[inCount]["inst_Phase"] += 1
+                    self.ins_String[inCount]["inst_Phase"] += 1
 
-
+                
                 inCount+= 1
+            if if_Single:
+                if_Done_Single = True
 
 
-            cycle_array.append(cycle_content)
-    #        pprint(cycle_array)
-    #        a = input()
-            count += 1
-            #if br/j max = target offset; br/j = False
-            if max_Ins + 1 < len(ins_String) and not if_Stall and not if_branch:
-                #and not if_cond
-                #if cond max = target offset
-                #if_cond == true
-                #if if_cond max += 1
-                max_Ins += 1
-            # else:
-            # 	max = target offset $ one occurence only not looped
-            # 	max += 1
+            self.cycle_array.append(cycle_phase)
+            self.cycle_content_array.append(self.cycle_content)
+            self.count += 1
 
-            print("max: ", max_Ins)
-        pprint(cycle_array)
-        pprint(code_line)
-        pprint(self.reg_Phase)
-#        Print_to_xlsx(cycle_array,code_line)
+            if self.max_Ins + 1 < len(self.ins_String) and not if_Stall and not if_branch:
+
+                self.max_Ins += 1
+
+
+            print("max: ", self.max_Ins)
+            
+        
+        
+        self.Update_ui(main_layout,self.cycle_array)
+#        Print_to_xlsx(self.cycle_array,self.code_line)
+        pprint(len(self.cycle_array))
+#        pprint(self.cycle_content_array)
+#        pprint(code_line)
+        pprint(self.opcode)
 
 if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
     a = MIPS()
-    a.start(test_string)
+    GUI = Window(a)
+    GUI.show()
+    sys.exit(app.exec())
+    
+    
+    
+#    a = MIPS()
+#    a.start(test_string)
