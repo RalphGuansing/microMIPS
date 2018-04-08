@@ -1,5 +1,6 @@
 import sys
 from PyQt5 import QtWidgets
+from PyQt5 import QtCore
 from pprint import pprint
 from functools import partial
 
@@ -33,12 +34,42 @@ class Window(QtWidgets.QMainWindow):
     def set_view(self):
         self.setCentralWidget(self.form_widget)
         self.form_widget.layout.load_tab.layout.bLoad.clicked.connect(self.print_text)
+        #test only
+        self.form_widget.layout.load_tab.layout.bStart.clicked.connect(self.show_inner_pipeline)
         
-        self.extractAction1.triggered.connect(partial(self.MIPS.start_cycle,True,self.form_widget.layout.main_tab.layout))
-        self.extractAction2.triggered.connect(partial(self.MIPS.start_cycle,False,self.form_widget.layout.main_tab.layout))
+        self.extractAction1.triggered.connect(partial(self.start_cycle,True,self.form_widget.layout.main_tab.layout))
+        self.extractAction2.triggered.connect(partial(self.start_cycle,False,self.form_widget.layout.main_tab.layout))
+        self.form_widget.layout.main_tab.layout.pipelineMap.itemDoubleClicked.connect(self.show_inner_pipeline)
+    
+    
+    def start_cycle(self, if_Single, main_layout):
+        self.MIPS.start_cycle(if_Single,main_layout)
+#        main_layout.pipelineMap.itemActivated.connect(self.show_inner_pipeline)
         
+    
+    
         
     #functionalities
+    def show_inner_pipeline(self, table_item):
+        print("table_item ", table_item.row(), table_item.column())
+        
+        try:
+            self.pipeline_Window.close()
+        except:
+            pass
+        
+        cycle_content ={}
+        cycle_content["phase"] = table_item.text()
+        
+        if cycle_content["phase"] != "*":
+            cycle_content["data"] = self.MIPS.cycle_content_array[table_item.column()][table_item.row()]
+            
+
+
+            self.pipeline_Window = SubWindow(cycle_content,self)
+            self.pipeline_Window.subwidgetFrame.layout.bExit.clicked.connect(self.pipeline_Window.close)
+            self.pipeline_Window.show()
+    
     
     def print_text(self):
         #for testing, able to read text by line
@@ -63,12 +94,83 @@ class Window(QtWidgets.QMainWindow):
             table.insertRow(table.rowCount())
             table.setItem(i, 0,QtWidgets.QTableWidgetItem(line))
             table.setItem(i, 7,QtWidgets.QTableWidgetItem(self.opcodes[i]))
-        
-        
+            
+class SubWindow(QtWidgets.QMainWindow):
     
-#        self.ar_Table.setItem(self.ar_Table.rowCount()-1,0,QtWidgets.QTableWidgetItem(ar_row["Date"])
+    def __init__(self, cycle_content,parent=None):
+        super(SubWindow, self).__init__(parent)
+#        print(table_item)
+        self.resize(600,300)
+        self.setWindowTitle("Inner Pipeline")
+        self.setWindowFlag(QtCore.Qt.SubWindow)
+        self.pipeline_tab(cycle_content)
+        
+    def pipeline_tab(self, cycle_content):
+        self.subwidgetFrame = SubWindowFrame(PipelineView, cycle_content)
+        self.setCentralWidget(self.subwidgetFrame)
 
+class SubWindowFrame(QtWidgets.QWidget):
+    
+    def __init__(self, layout, extra=None):
+        super().__init__()
+        
+        if extra is None:
+            self.layout = layout(self)
+        else:
+            self.layout = layout(extra, self)
+        
+        self.setLayout(self.layout)
+        
+class PipelineView(QtWidgets.QGridLayout):
+    
+    def __init__(self, cycle_content, parent=None ):
+        super().__init__()
+        self.cycle_content = cycle_content
+        self.init_ui()
 
+    
+    def init_ui(self):
+        self.pipelineContent = QtWidgets.QTableWidget()
+        self.pipelineContent.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.pipelineContent.setColumnCount(1)
+        self.pipelineContent.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.pipelineContent.setHorizontalHeaderLabels(["Data"])
+        self.bExit = QtWidgets.QPushButton("EXIT")
+        self.bExit.setFixedWidth(100)
+        self.bExit.setStyleSheet("""QPushButton { font-size: 14pt; padding: 10px; color: #fff; background-color: #ffc107; border-color: #4cae4c;
+                                                    border-radius: 5px;
+                                                    margin-top: 10px;
+                                                    }
+                                        QPushButton:hover {background-color: #fdcb35; border-color: #fdcb35;}""")
+        
+        
+#        print(self.table_item)
+        
+        self.addWidget(self.pipelineContent,1,1,2,2)
+        self.addWidget(self.bExit,3,2,1,1)
+        pprint(self.cycle_content)
+        
+        
+        if self.cycle_content["phase"] == "IF":
+            content_title = ["IF/ID.IR", "IF/ID.NPC"]
+        if self.cycle_content["phase"] == "ID":
+            content_title = ["ID/EX.A", "ID/EX.B", "ID/EX.IMM", "ID/EX.IR"]
+        if self.cycle_content["phase"] == "EX":
+            content_title = ["EX/MEM.ALUOUTPUT", "EX/MEM.COND", "EX/MEM.IR", "EX/MEM.B"]
+        if self.cycle_content["phase"] == "MEM":
+            content_title = ["MEM/WB.LMD","MEM/WB.IR","MEM/WB.ALUOUTPUT","MEM/WB.B",'MEM/WB.RANGE']
+        if self.cycle_content["phase"] == "WB":
+            content_title = ["Rn"]
+            
+            
+        self.pipelineContent.setRowCount(len(content_title))
+        self.pipelineContent.setVerticalHeaderLabels(content_title)
+        
+        for nCtr, title in enumerate(content_title):
+            self.pipelineContent.setItem(nCtr,0, QtWidgets.QTableWidgetItem(str(self.cycle_content["data"][title])))
+            
+        
+        
 
 class WindowFrame(QtWidgets.QWidget):
     
@@ -104,6 +206,7 @@ XORI R1, R2, #1000
 """)
         
         self.opcodes = QtWidgets.QTableWidget()
+        self.opcodes.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.opcodes.setColumnCount(8)
         self.opcodes.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.opcodes.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
@@ -168,6 +271,7 @@ class mainview(QtWidgets.QVBoxLayout):
         label2 = QtWidgets.QLabel('Pipeline')
         
         self.pipelineMap = QtWidgets.QTableWidget()
+        self.pipelineMap.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 #        self.pipelineMap.setColumnCount(1)
 #        self.pipelineMap.setRowCount(5)        
 #        self.pipelineMap.setHorizontalHeaderLabels(["Instruction","1","2","3"])

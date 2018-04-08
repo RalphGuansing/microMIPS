@@ -352,7 +352,6 @@ class MIPS:
                     self.reg_Phase[1]["ID/EX.IR"] = self.reg_Phase[0]["IF/ID.IR"]
                     self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                     self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                    self.reg_Phase[1]["ID/EX.A"] = None
                     self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
                     #get A, B and imm
             #---------------------INC---------------------------
@@ -408,8 +407,6 @@ class MIPS:
         self.reg_Phase[2]["EX/MEM.IR"] = self.reg_Phase[1]["ID/EX.IR"]
         if ins_String["ins_Num"] != 7:
             self.reg_Phase[2]["EX/MEM.B"] = self.reg_Phase[1]["ID/EX.B"]
-        else:
-            self.reg_Phase[2]["EX/MEM.B"] = None
         self.reg_Phase[2]["EX/MEM.ALUOUTPUT"] = ALUOUT["ALUOUT"]
         self.reg_Phase[2]["EX/MEM.COND"] = ALUOUT["cond"]
         ins_String["cond"] = ALUOUT["cond"] 
