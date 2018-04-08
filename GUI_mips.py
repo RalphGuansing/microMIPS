@@ -62,30 +62,42 @@ class Window(QtWidgets.QMainWindow):
         cycle_content ={}
         cycle_content["phase"] = table_item.text()
         #---only for testing---#
-#        memValue = ""
-#        mem_container_array = []
-#        mem_container ={}
-#        
-#
-#        #IMPORTANT TO CREATE A SEPARATE MEMORY LIST
-#        test_memlist = list(self.MIPS.memList)
-#        
-#        for nCtr,i in enumerate(test_memlist):
-#            if int(i["memAddress"], 16)% 8 == 0:  
-#                if nCtr != 0:
-#                    mem_container["Value"] = memValue.upper()
-#                    memValue = ""
-#                    
+        memValue = ""
+        mem_container_array = []
+        mem_container ={}
+        
+
+        #IMPORTANT TO CREATE A SEPARATE MEMORY LIST
+        test_memlist = list(self.MIPS.memList)
+        
+#        for nCtr,mem in enumerate(test_memlist):
+        nCtr = 0
+        while nCtr <= len(test_memlist):
+            if nCtr != len(test_memlist):
+                mem = test_memlist[nCtr]
+        
+            if nCtr == len(test_memlist):
+                mem_container["Value"] = memValue.upper()
+                mem_container_array.append(mem_container)
+                mem_container={}
+    
+            elif int(mem["memAddress"], 16)% 8 == 0:  
+                if nCtr != 0:
+                    mem_container["Value"] = memValue.upper()
+                    memValue = ""
+                    mem_container_array.append(mem_container)
+                    mem_container={}
+                    
+                mem_container["Address"] = mem["memAddress"].upper()
+                print(mem["memAddress"])
+                
+#                if nCtr == len(test_memlist)-1:
 #                    mem_container_array.append(mem_container)
-#                    mem_container={}
-#                    
-#                print(i["memAddress"])
-#                mem_container["Address"] = i["memAddress"].upper()
-#            
-#            memValue = i["memValue"]+ str(memValue)
-#        
-#        
-#        pprint(mem_container_array)
+            if nCtr != len(test_memlist):
+                memValue = mem["memValue"]+ str(memValue)
+            nCtr += 1
+        
+        pprint(mem_container_array)
 #            
         #---only for testing---#
         
