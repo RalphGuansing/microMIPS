@@ -3,12 +3,13 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from pprint import pprint
 from functools import partial
+from microMIPS_class import *
 
 class Window(QtWidgets.QMainWindow):
     
-    def __init__(self,MIPS, parent= None ):
+    def __init__(self, parent= None ):
         super(Window, self).__init__()
-        self.MIPS = MIPS
+        
         self.setGeometry(8,50,1500,500)
         self.setWindowTitle("microMIPS")
         
@@ -35,7 +36,7 @@ class Window(QtWidgets.QMainWindow):
         self.setCentralWidget(self.form_widget)
         self.form_widget.layout.load_tab.layout.bLoad.clicked.connect(self.print_text)
         #test only
-        self.form_widget.layout.load_tab.layout.bStart.clicked.connect(self.show_inner_pipeline)
+#        self.form_widget.layout.load_tab.layout.bStart.clicked.connect(self.show_inner_pipeline)
         
         self.extractAction1.triggered.connect(partial(self.start_cycle,True,self.form_widget.layout.main_tab.layout))
         self.extractAction2.triggered.connect(partial(self.start_cycle,False,self.form_widget.layout.main_tab.layout))
@@ -60,6 +61,34 @@ class Window(QtWidgets.QMainWindow):
         
         cycle_content ={}
         cycle_content["phase"] = table_item.text()
+        #---only for testing---#
+#        memValue = ""
+#        mem_container_array = []
+#        mem_container ={}
+#        
+#
+#        #IMPORTANT TO CREATE A SEPARATE MEMORY LIST
+#        test_memlist = list(self.MIPS.memList)
+#        
+#        for nCtr,i in enumerate(test_memlist):
+#            if int(i["memAddress"], 16)% 8 == 0:  
+#                if nCtr != 0:
+#                    mem_container["Value"] = memValue.upper()
+#                    memValue = ""
+#                    
+#                    mem_container_array.append(mem_container)
+#                    mem_container={}
+#                    
+#                print(i["memAddress"])
+#                mem_container["Address"] = i["memAddress"].upper()
+#            
+#            memValue = i["memValue"]+ str(memValue)
+#        
+#        
+#        pprint(mem_container_array)
+#            
+        #---only for testing---#
+        
         
         if cycle_content["phase"] != "*":
             cycle_content["data"] = self.MIPS.cycle_content_array[table_item.column()][table_item.row()]
@@ -72,6 +101,7 @@ class Window(QtWidgets.QMainWindow):
     
     
     def print_text(self):
+        self.MIPS = MIPS()
         #for testing, able to read text by line
         raw_code =  self.form_widget.layout.load_tab.layout.textEdit.toPlainText()
         
@@ -154,7 +184,7 @@ class PipelineView(QtWidgets.QGridLayout):
         if self.cycle_content["phase"] == "IF":
             content_title = ["IF/ID.IR", "IF/ID.NPC"]
         if self.cycle_content["phase"] == "ID":
-            content_title = ["ID/EX.A", "ID/EX.B", "ID/EX.IMM", "ID/EX.IR"]
+            content_title = ["ID/EX.A", "ID/EX.B", "ID/EX.IMM", "ID/EX.IR", "ID/EX.NPC"]
         if self.cycle_content["phase"] == "EX":
             content_title = ["EX/MEM.ALUOUTPUT", "EX/MEM.COND", "EX/MEM.IR", "EX/MEM.B"]
         if self.cycle_content["phase"] == "MEM":

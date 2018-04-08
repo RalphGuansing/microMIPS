@@ -187,7 +187,7 @@ class MIPS:
         bin_Opcode.append(self.regList[rt]["regNum"])
 
         for x in range(0, 4):
-            bin_Opcode.append(bin(int(imm[x])).split('b')[-1].zfill(4))
+            bin_Opcode.append(bin(int(imm[x], 16)).split('b')[-1].zfill(4))
 
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
         print(expression)
@@ -846,8 +846,8 @@ class MIPS:
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    a = MIPS()
-    GUI = Window(a)
+#    a = MIPS()
+    GUI = Window()
     GUI.show()
     sys.exit(app.exec())
     
