@@ -66,7 +66,7 @@ class MIPS:
         del sanitized[0]
         sanitized = " ".join(sanitized)
 
-        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9])", sanitized):
+        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9])$", sanitized):
             return False
         else:
             return True
@@ -76,7 +76,7 @@ class MIPS:
         del sanitized[0]
         sanitized = " ".join(sanitized)
 #        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s1|1)[0-9A-F]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized): OLD
-        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s0|0)[0-9A-Fa-f]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]", sanitized):
+        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\s0|0)[0-9A-Fa-f]{3}[(]R([3][0-1]|[1-2][0-9]|[0-9])[)]$", sanitized):
             return False
         else:
             return True
@@ -86,7 +86,7 @@ class MIPS:
         del sanitized[0]
         sanitized = " ".join(sanitized)
 
-        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9]),(\s#|#)[0-9A-F]{4}", sanitized):
+        if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]),(\sR|R)([3][0-1]|[1-2][0-9]|[0-9]),(\s#|#)[0-9A-F]{4}$", sanitized):
             return False
         else:
             return True
@@ -99,7 +99,11 @@ class MIPS:
         sanitized = " ".join(sanitized)
 
         if re.match(r"^R([3][0-1]|[1-2][0-9]|[0-9]), \w+$", sanitized):
-            return False
+            sanitized = sanitized.split(" ")
+            if sanitized[0][-2:][:-1] == "0" or self.get_line_address(sanitized[1]) == 0:
+                return True
+            else:
+                return False
         else:
             return True
 
@@ -110,7 +114,10 @@ class MIPS:
         sanitized = " ".join(sanitized)
 
         if re.match(r"^\w+$", sanitized):
-            return False
+            if self.get_line_address(sanitized) == 0:
+                return True
+            else:
+                return False
         else:
             return True
     #---------------------ralph---------------------------
@@ -457,28 +464,28 @@ class MIPS:
                     if(self.memList[i]["memAddress"] == mem):
 
                         byte1= self.memList[i]["memValue"]
-                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
+#                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
 
                         byte2= self.memList[i+1]["memValue"]
-                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
+#                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
 
                         byte3= self.memList[i+2]["memValue"]
-                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
+#                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
 
                         byte4= self.memList[i+3]["memValue"]
-                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
+#                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
 
                         byte5= self.memList[i+4]["memValue"]
-                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
+#                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
 
                         byte6= self.memList[i+5]["memValue"]
-                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
+#                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
 
                         byte7= self.memList[i+6]["memValue"]
-                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
+#                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
 
                         byte8= self.memList[i+7]["memValue"]
-                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
+#                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
 
                 self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
                 self.reg_Phase[3]["MEM/WB.RANGE"] = None
@@ -520,14 +527,14 @@ class MIPS:
                         self.memList[i+6]["memValue"]=byte7
                         self.memList[i+7]["memValue"]=byte8
 
-                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
-                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
-                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
-                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
-                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
-                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
-                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
-                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
+#                        print(self.memList[i]["memValue"],self.memList[i]["memAddress"])
+#                        print(self.memList[i+1]["memValue"],self.memList[i+1]["memAddress"])
+#                        print(self.memList[i+2]["memValue"],self.memList[i+2]["memAddress"])
+#                        print(self.memList[i+3]["memValue"],self.memList[i+3]["memAddress"])
+#                        print(self.memList[i+4]["memValue"],self.memList[i+4]["memAddress"])
+#                        print(self.memList[i+5]["memValue"],self.memList[i+5]["memAddress"])
+#                        print(self.memList[i+6]["memValue"],self.memList[i+6]["memAddress"])
+#                        print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
                 
                 self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
                 
@@ -572,7 +579,7 @@ class MIPS:
             self.regList[ins_String["ins_rd"]]["in_use"] = False
 
         elif ins_String["ins_type"] == 2:
-           self.regList[ins_String["ins_rt"]]["in_use"] = False
+            self.regList[ins_String["ins_rt"]]["in_use"] = False
 
         else:
             self.regList[ins_String["ins_rt"]]["in_use"] = False
@@ -638,7 +645,8 @@ class MIPS:
 
 
     def start_opcode(self, dirty_code):
-        
+        self.if_Error = False
+        self.Error_Line = 0
         self.opcode = []
         
         #cleaning code.
@@ -658,7 +666,7 @@ class MIPS:
                 
                 
         nCtr = 0
-
+        print("in initialize")
         # OLD while self.input_Phase and int(self.address_hex, 16) < int("2000", 16):
         while nCtr < len(code_line):
             ins_Input = {}
@@ -672,61 +680,75 @@ class MIPS:
             ins_Input["if_BR_J"] = False
             nCtr += 1
             if len(ins_Input["inst_String"]) != 0:
-                ins_Input["ins_Num"] = self.ins_List.index(ins_Input["inst_String"].split(" ")[0])
-                self.ins_String.append(ins_Input)
+                
+                if ins_Input["inst_String"].split(" ")[0] in self.ins_List:
+                    ins_Input["ins_Num"] = self.ins_List.index(ins_Input["inst_String"].split(" ")[0])
+                    self.ins_String.append(ins_Input)
+                else:
+                    print("Instruction Error asdasd")
+                    print("Instruction Does not exist")
+                    self.if_Error = True
+                    self.Error_Line = nCtr 
+                    break
+                    
             else:
                 self.input_Phase = False
 
         self.if_insError = False
         self.if_paramError = False
         count = 0
-
-        while not self.if_insError and not self.if_paramError and count < len(self.ins_String):
-            # Checks if Instruction is valid
-            if self.ins_String[count]["inst_String"].split(" ")[0] in self.ins_List:
-                type_Inst = {0 : self.LD_SD_REGEX, 1 : self.LD_SD_REGEX, 2 : self.DADDIU_XORI_REGEX, 3 : self.DADDIU_XORI_REGEX, 4 : self.DADDU_SLT_REGEX, 5 : self.DADDU_SLT_REGEX, 6 : self.BGTZC_REGEX, 7 : self.J_REGEX}
-                # Checks if parameter is valid
-                self.if_paramError = type_Inst[self.ins_String[count]["ins_Num"]](self.ins_String[count]["inst_String"])
-                if self.if_paramError:
-                    print("ERROR: Invalid Parameter @ Line", count + 1)
-                else:
-                    ins_Format = {}
-                    type_Form = {0 : self.LD_SD_REFORMAT, 1 : self.LD_SD_REFORMAT, 2 : self.DADDIU_XORI_REFORMAT, 3 : self.DADDIU_XORI_REFORMAT, 4 : self.DADDU_SLT_REFORMAT, 5 : self.DADDU_SLT_REFORMAT, 6 : self.BGTZC_REFORMAT, 7 : self.J_REFORMAT}
-                    typenum = self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])
-                    if typenum == 6:
-                        ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"], count)
+        
+        if not self.if_Error:
+        
+            while not self.if_insError and not self.if_paramError and count < len(self.ins_String):
+                # Checks if Instruction is valid
+                if self.ins_String[count]["inst_String"].split(" ")[0] in self.ins_List:
+                    type_Inst = {0 : self.LD_SD_REGEX, 1 : self.LD_SD_REGEX, 2 : self.DADDIU_XORI_REGEX, 3 : self.DADDIU_XORI_REGEX, 4 : self.DADDU_SLT_REGEX, 5 : self.DADDU_SLT_REGEX, 6 : self.BGTZC_REGEX, 7 : self.J_REGEX}
+                    # Checks if parameter is valid
+                    self.if_paramError = type_Inst[self.ins_String[count]["ins_Num"]](self.ins_String[count]["inst_String"])
+                    if self.if_paramError:
+                        print("ERROR: Invalid Parameter @ Line", count + 1)
+                        self.Error_Line = count+1
+                        break
                     else:
-                        ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"])
+                        ins_Format = {}
+                        type_Form = {0 : self.LD_SD_REFORMAT, 1 : self.LD_SD_REFORMAT, 2 : self.DADDIU_XORI_REFORMAT, 3 : self.DADDIU_XORI_REFORMAT, 4 : self.DADDU_SLT_REFORMAT, 5 : self.DADDU_SLT_REFORMAT, 6 : self.BGTZC_REFORMAT, 7 : self.J_REFORMAT}
+                        typenum = self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])
+                        if typenum == 6:
+                            ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"], count)
+                        else:
+                            ins_Format = type_Form[self.ins_List.index(self.ins_String[count]["inst_String"].split(" ")[0])](self.ins_String[count]["inst_String"])
 
-                    self.opcode.append(ins_Format["Opcode"])
-                    self.ins_String[count]["ins_Opcode"] = ins_Format["Opcode"]
-                    self.ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
-
-                    #---------------------INC---------------------------
-                    if ins_Format["if_BCJ"]:
-                        self.ins_String[count]["ins_type"] = 1
-                        self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
+                        self.opcode.append(ins_Format["Opcode"])
+                        self.ins_String[count]["ins_Opcode"] = ins_Format["Opcode"]
                         self.ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
+
                         #---------------------INC---------------------------
-                    elif ins_Format["if_Imm"]:
-                        self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
-                        self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
-                        self.ins_String[count]["ins_type"] = 2
-                    elif ins_Format["if_LSD"]:
-                        self.ins_String[count]["ins_base"] = ins_Format["ins_base"]
-                        self.ins_String[count]["ins_offset"] = ins_Format["ins_offset"]
-                        self.ins_String[count]["ins_type"] = 3
-                    else:
-                        self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
-                        self.ins_String[count]["ins_rd"] = ins_Format["ins_rd"]
-                        self.ins_String[count]["ins_type"] = 0
+                        if ins_Format["if_BCJ"]:
+                            self.ins_String[count]["ins_type"] = 1
+                            self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
+                            self.ins_String[count]["ins_rt"] = ins_Format["ins_rt"]
+                            #---------------------INC---------------------------
+                        elif ins_Format["if_Imm"]:
+                            self.ins_String[count]["ins_imm"] = ins_Format["ins_imm"]
+                            self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
+                            self.ins_String[count]["ins_type"] = 2
+                        elif ins_Format["if_LSD"]:
+                            self.ins_String[count]["ins_base"] = ins_Format["ins_base"]
+                            self.ins_String[count]["ins_offset"] = ins_Format["ins_offset"]
+                            self.ins_String[count]["ins_type"] = 3
+                        else:
+                            self.ins_String[count]["ins_rs"] = ins_Format["ins_rs"]
+                            self.ins_String[count]["ins_rd"] = ins_Format["ins_rd"]
+                            self.ins_String[count]["ins_type"] = 0
 
 
-                    count += 1
-            else:
-                self.if_insError = True
-                print("ERROR: Invalid Instruction @ Line", count + 1)
-        self.init_cycle()
+                        count += 1
+                else:
+                    self.if_insError = True
+                    print("ERROR: Invalid Instruction @ Line", count + 1)
+            self.init_cycle()
+        
 #        self.start_cycle(True)
     def init_cycle(self):
         self.if_updated_ui = False
@@ -734,6 +756,7 @@ class MIPS:
         self.cycle_array=[]
         self.cycle_content_array=[]
         self.cycle_content={}
+        self.is_Done_cycle = False
     def Update_ui(self,main_layout,cycle_array):
         pipeline_map = main_layout.pipelineMap
 #        pipeline_map.setColumnCount(1)
@@ -749,15 +772,20 @@ class MIPS:
                 pipeline_map.setVerticalHeaderLabels(self.code_line)
 
         for nCtr, cycle in enumerate(cycle_array):
-            if(pipeline_map.columnCount() < len(cycle_array)):
-                pipeline_map.insertColumn(pipeline_map.columnCount())
+            if not self.is_Done_cycle:
+                if(pipeline_map.columnCount() < len(cycle_array)):
+                    pipeline_map.insertColumn(pipeline_map.columnCount())
+            else:
+                if(pipeline_map.columnCount() < len(cycle_array)-1):
+                    pipeline_map.insertColumn(pipeline_map.columnCount())
+                
 #            pprint(cycle)
 #            print("phase in Cycle", nCtr +1,)
             for nCtr_2 in range(0, len(self.code_line)):
                 if nCtr_2 in cycle:
-#                    print(cycle[nCtr_2])
                     pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))     
         
+        pprint(cycle_array)
         print("in update ui")
 #        print(self.cycle_array)
         
@@ -835,7 +863,16 @@ class MIPS:
                         self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
                         self.max_Ins = inCount = self.done 
                         inCount -=1
-                    #--BGTZC/J--#
+                if self.ins_String[inCount]["inst_Phase"] == 5:  
+                    if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
+                            cycle_phase[inCount]= phase["phase"] #Store before jumping lines
+                            self.cycle_content[inCount]= phase["content"] #Store before jumping lines
+                            if_jumped = True
+                            sanitized = self.ins_String[inCount]["inst_String"].split(" ")
+                            self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
+                            self.max_Ins = inCount = self.done 
+                            inCount -=1
+                        #--BGTZC/J--#
 
                 if self.ins_String[inCount]["if_Stall"]:
                     if_Stall = True
@@ -868,7 +905,8 @@ class MIPS:
 
             print("max: ", self.max_Ins)
             
-        
+        if self.done == highest:
+            self.is_Done_cycle = True
         
         self.Update_ui(main_layout,self.cycle_array)
 #        Print_to_xlsx(self.cycle_array,self.code_line)
