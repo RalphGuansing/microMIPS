@@ -357,7 +357,7 @@ class MIPS:
                     #get A, B and imm
             #---------------------INC---------------------------
         elif ins_String["ins_type"] == 2: #IMM
-            if self.regList[ins_String["ins_rs"]]["in_use"]:
+            if self.regList[ins_String["ins_rs"]]["in_use"] or self.regList[ins_String["ins_rt"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
@@ -366,7 +366,12 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_rs"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
+                sign_bit = bin(int(ins_String["ins_imm"][0], 16)).split('b')[-1].zfill(4)[0]
+
+                if sign_bit == '1':#changed
+                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_imm"]
+                else:
+                    self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
                 #get A, B and imm
         elif ins_String["ins_type"] == 3: #SD/LD
             if self.regList[ins_String["ins_base"]]["in_use"] or self.regList[ins_String["ins_rt"]]["in_use"]:
@@ -379,10 +384,15 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_base"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_offset"].zfill(16)
+                sign_bit = bin(int(ins_String["ins_offset"][0], 16)).split('b')[-1].zfill(4)[0]
+
+                if sign_bit == '1':#changed
+                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_offset"]
+                else:
+                    self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_offset"].zfill(16)
                 #get A, B and imm
         else: #REGISTERS
-            if self.regList[ins_String["ins_rt"]]["in_use"] or self.regList[ins_String["ins_rs"]]["in_use"]:
+            if self.regList[ins_String["ins_rt"]]["in_use"] or self.regList[ins_String["ins_rs"]]["in_use"] or self.regList[ins_String["ins_rd"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
@@ -391,7 +401,12 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_rs"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_Opcode"][-4:].zfill(16)
+                sign_bit = bin(int(ins_String["ins_Opcode"][-4:][0], 16)).split('b')[-1].zfill(4)[0]
+
+                if sign_bit == '1':#changed
+                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_Opcode"][-4:]
+                else:
+                    self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_Opcode"][-4:].zfill(16)
                 #get A, B and imm
 
         if not ins_String["if_Stall"]:
@@ -528,11 +543,11 @@ class MIPS:
 
     def WB(self, ins_String):
         if ins_String["ins_type"] == 0:
-            self.regList[ins_String["ins_rd"]]["in_use"] = False
+            # self.regList[ins_String["ins_rd"]]["in_use"] = False
             self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
             self.regList[ins_String["ins_rd"]]["regValue"] = self.reg_Phase[4]["Rn"]
         elif ins_String["ins_type"] == 2:
-            self.regList[ins_String["ins_rt"]]["in_use"] = False
+            # self.regList[ins_String["ins_rt"]]["in_use"] = False
             self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
             self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
         elif ins_String["ins_type"] == 1:
@@ -540,7 +555,7 @@ class MIPS:
         else:
             if ins_String["ins_Num"] == 0:
 #            print("in WB ", ins_String["ins_Num"])
-                self.regList[ins_String["ins_rt"]]["in_use"] = False
+                # self.regList[ins_String["ins_rt"]]["in_use"] = False
                 self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
                 self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
             else:
@@ -551,6 +566,18 @@ class MIPS:
         
         content = dict(self.reg_Phase[4])
         return {"phase":"WB", "content":content}
+
+    def BUFFER(self,ins_String):
+        if ins_String["ins_type"] == 0:
+            self.regList[ins_String["ins_rd"]]["in_use"] = False
+
+        elif ins_String["ins_type"] == 2:
+           self.regList[ins_String["ins_rt"]]["in_use"] = False
+
+        else:
+            self.regList[ins_String["ins_rt"]]["in_use"] = False
+        content = ""
+        return {"phase":"","content":content}
 
     #EXTRA FUNCTIONS FOR BGTZC
     def find_address(self, code):
@@ -742,7 +769,7 @@ class MIPS:
         pprint(self.ins_String)
 #        print(string)
         
-        phase_type = {1: self.IF, 2: self.ID, 3: self.EX, 4: self.MEM, 5: self.WB}
+        phase_type = {1: self.IF, 2: self.ID, 3: self.EX, 4: self.MEM, 5: self.WB, 6: self.BUFFER}
         if_Stall = False
         
         
@@ -797,7 +824,7 @@ class MIPS:
                 #--BGTZC/J--#
 
 
-                if self.ins_String[inCount]["inst_Phase"] == 5:
+                if self.ins_String[inCount]["inst_Phase"] == 6:
                     self.done += 1
                     #--BGTZC/J--#
                     if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
