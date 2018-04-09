@@ -10,7 +10,8 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self, parent= None ):
         super(Window, self).__init__()
         
-        self.setGeometry(8,50,1500,500)
+#        self.setGeometry(8,50,1500,500)
+        self.resize(1366,768)
         self.setWindowTitle("microMIPS")
         
         self.extractAction1 = QtWidgets.QAction("Run Single Cycle", self)
@@ -45,6 +46,7 @@ class Window(QtWidgets.QMainWindow):
     
     def start_cycle(self, if_Single, main_layout):
         self.MIPS.start_cycle(if_Single,main_layout)
+        self.output_to_gui()
 #        main_layout.pipelineMap.itemActivated.connect(self.show_inner_pipeline)
         
     
@@ -62,43 +64,6 @@ class Window(QtWidgets.QMainWindow):
         cycle_content ={}
         cycle_content["phase"] = table_item.text()
         #---only for testing---#
-        memValue = ""
-        mem_container_array = []
-        mem_container ={}
-        
-
-        #IMPORTANT TO CREATE A SEPARATE MEMORY LIST
-        test_memlist = list(self.MIPS.memList)
-        
-#        for nCtr,mem in enumerate(test_memlist):
-        nCtr = 0
-        while nCtr <= len(test_memlist):
-            if nCtr != len(test_memlist):
-                mem = test_memlist[nCtr]
-        
-            if nCtr == len(test_memlist):
-                mem_container["Value"] = memValue.upper()
-                mem_container_array.append(mem_container)
-                mem_container={}
-    
-            elif int(mem["memAddress"], 16)% 8 == 0:  
-                if nCtr != 0:
-                    mem_container["Value"] = memValue.upper()
-                    memValue = ""
-                    mem_container_array.append(mem_container)
-                    mem_container={}
-                    
-                mem_container["Address"] = mem["memAddress"].upper()
-                print(mem["memAddress"])
-                
-#                if nCtr == len(test_memlist)-1:
-#                    mem_container_array.append(mem_container)
-            if nCtr != len(test_memlist):
-                memValue = mem["memValue"]+ str(memValue)
-            nCtr += 1
-        
-        pprint(mem_container_array)
-#            
         #---only for testing---#
         
         
@@ -126,7 +91,46 @@ class Window(QtWidgets.QMainWindow):
         for i,line in enumerate(self.code_line):
             print('Line ' , i+1 , ' ' ,line)
             
-            
+    
+    def assemble_mem(self, memList):
+        memValue = ""
+        mem_container_array = []
+        mem_container ={}
+        
+
+        #IMPORTANT TO CREATE A SEPARATE MEMORY LIST
+        
+#        for nCtr,mem in enumerate(memList):
+        nCtr = 0
+        while nCtr <= len(memList):
+            if nCtr != len(memList):
+                mem = memList[nCtr]
+        
+            if nCtr == len(memList):
+                mem_container["Value"] = memValue.upper()
+                mem_container_array.append(mem_container)
+                mem_container={}
+    
+            elif int(mem["memAddress"], 16)% 8 == 0:  
+                if nCtr != 0:
+                    mem_container["Value"] = memValue.upper()
+                    memValue = ""
+                    mem_container_array.append(mem_container)
+                    mem_container={}
+                    
+                mem_container["Address"] = mem["memAddress"].upper()
+                print(mem["memAddress"])
+                
+#                if nCtr == len(memList)-1:
+#                    mem_container_array.append(mem_container)
+            if nCtr != len(memList):
+                memValue = mem["memValue"]+ str(memValue)
+            nCtr += 1
+        
+        return mem_container_array
+        
+        
+    
     
     def output_to_gui(self):
         table = self.form_widget.layout.load_tab.layout.opcodes
@@ -136,6 +140,37 @@ class Window(QtWidgets.QMainWindow):
             table.insertRow(table.rowCount())
             table.setItem(i, 0,QtWidgets.QTableWidgetItem(line))
             table.setItem(i, 7,QtWidgets.QTableWidgetItem(self.opcodes[i]))
+        
+        reg_table = self.form_widget.layout.main_tab.layout.registers
+        reg_table.setColumnCount(0)
+        reg_table.setColumnCount(1)
+        reg_table.setHorizontalHeaderLabels(["Value"])
+        reg_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        
+        regList = list(self.MIPS.regList)        
+        
+        for nCtr, reg in enumerate(regList):
+            reg_table.setItem(nCtr, 0,QtWidgets.QTableWidgetItem(reg["regValue"]))
+        
+        
+        
+        mem_table = self.form_widget.layout.main_tab.layout.data
+        mem_table.setRowCount(0)
+        mem_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        mem_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        
+        memList = list(self.MIPS.memList)
+        memList = self.assemble_mem(memList)
+        
+        for nCtr, mem in enumerate(memList):
+            mem_table.insertRow(mem_table.rowCount())
+            mem_table.setItem(nCtr,0, QtWidgets.QTableWidgetItem(mem["Address"]))
+            mem_table.setItem(nCtr,1, QtWidgets.QTableWidgetItem(mem["Value"]))
+            
+        pprint(memList)
+            
+        
+        
             
 class SubWindow(QtWidgets.QMainWindow):
     
@@ -306,38 +341,69 @@ XORI R1, R2, #1000
         self.addLayout(self.h_box)
         self.addLayout(self.grid_layout)
 
-class mainview(QtWidgets.QVBoxLayout):
+class mainview(QtWidgets.QGridLayout):
     def __init__(self, parent=None):
-        super(QtWidgets.QVBoxLayout, self).__init__(parent)
+        super(QtWidgets.QGridLayout, self).__init__(parent)
         
         label2 = QtWidgets.QLabel('Pipeline')
         
         self.pipelineMap = QtWidgets.QTableWidget()
         self.pipelineMap.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-#        self.pipelineMap.setColumnCount(1)
-#        self.pipelineMap.setRowCount(5)        
-#        self.pipelineMap.setHorizontalHeaderLabels(["Instruction","1","2","3"])
-#        self.pipelineMap.setHorizontalHeaderLabels(["Instruction"])
-#        self.pipelineMap.setColumnWidth(0,150)
-#        self.pipelineMap.setColumnWidth(1,50)
-#        self.pipelineMap.setColumnWidth(2,50)
-#        self.pipelineMap.setColumnWidth(3,50)
-        
-        
+
         self.registers = QtWidgets.QTableWidget()
         self.registers.setRowCount(32)        
         self.registers.setVerticalHeaderLabels(["R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15","R16","R17","R18","R19","R20","R21","R22","R23","R24","R25","R26","R27","R28","R29","R30","R31"])
+        
+        self.data = QtWidgets.QTableWidget()
+        self.data.setColumnCount(2)
+        self.data.setHorizontalHeaderLabels(["Address", "Representation"])
+        
 
         
+        Pipeline_Group = QtWidgets.QGroupBox("Pipeline")
+        Pipeline_Layout = QtWidgets.QGridLayout()
+        Pipeline_Layout.addWidget(self.pipelineMap,1,1)
+        Pipeline_Group.setLayout(Pipeline_Layout)
         
-        self.h_box = QtWidgets.QHBoxLayout()
+        Register_Group = QtWidgets.QGroupBox("Registers")
+        Register_Layout = QtWidgets.QGridLayout()
+        Register_Layout.addWidget(self.registers,1,1)
+        Register_Group.setLayout(Register_Layout)
         
-        self.h_box.addWidget(self.pipelineMap)
-        self.h_box.addWidget(self.registers)
-        self.addWidget(label2)
+        Data_Group = QtWidgets.QGroupBox("Data")
+        Data_Layout = QtWidgets.QGridLayout()
+        Data_Layout.addWidget(self.data,1,1)
+        Data_Group.setLayout(Data_Layout)
+        
+        self.addWidget(Pipeline_Group,1,1,2,1)
+        self.addWidget(Register_Group,1,2,1,1)
+        self.addWidget(Data_Group,2,2,1,1)
         
         
-        self.addLayout(self.h_box)        
+        self.setColumnStretch(1,1)
+        
+        
+#        self.addWidget(label2)
+        
+        
+#        self.addLayout(self.h_box)
+        
+    def make_navbar(self):
+        self.navbar = QtWidgets.QGroupBox("Registers")
+        #self.navbar.setFlat(True)
+        
+        navGrid = QtWidgets.QGridLayout()
+        
+        navGrid.setColumnStretch(5,1)
+        navGrid.addWidget(self.bLogo, 1,1)
+        navGrid.addWidget(self.bInvoice, 1,2)
+        navGrid.addWidget(self.bInventory,1,3)
+        navGrid.addWidget(self.bAccounting,1,4)
+        #navGrid.addWidget(self.bAdmin,1,6)
+        navGrid.addWidget(self.bLogout,1,7)
+        
+        self.navbar.setLayout(navGrid)
+        
        
         
         

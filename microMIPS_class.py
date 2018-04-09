@@ -466,6 +466,7 @@ class MIPS:
                         print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
 
                 self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
+                self.reg_Phase[3]["MEM/WB.RANGE"] = None
 #                print(reg_Phase[3]["MEM/WB.LMD"])
             
             else:
@@ -514,7 +515,12 @@ class MIPS:
                         print(self.memList[i+7]["memValue"],self.memList[i+7]["memAddress"])
                 
                 self.reg_Phase[3]["MEM/WB.LMD"] = "".join((byte8,byte7,byte6,byte5,byte4,byte3,byte2,byte1))
-
+                
+                
+                
+                
+                self.reg_Phase[3]["MEM/WB.RANGE"] = mem.upper() + " - " + str(hex(int(mem, 16)+7).split('x')[-1].zfill(4).upper())
+                
         self.reg_Phase[2].clear()
         print("MEM")
         content = dict(self.reg_Phase[3])
