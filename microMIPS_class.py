@@ -333,7 +333,7 @@ class MIPS:
     def IF(self, ins_String):
 
         self.reg_Phase[0]["IF/ID.IR"] = ins_String["ins_Opcode"]
-        self.reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(4).upper()
+        self.reg_Phase[0]["IF/ID.NPC"] = hex(int(ins_String["inst_add"], 16) + 4).split('x')[-1].zfill(16).upper()
         if ins_String["ins_type"] == 1:
             ins_String["if_BR_J"] = True
 
@@ -364,7 +364,7 @@ class MIPS:
                     #get A, B and imm
             #---------------------INC---------------------------
         elif ins_String["ins_type"] == 2: #IMM
-            if self.regList[ins_String["ins_rs"]]["in_use"] or self.regList[ins_String["ins_rt"]]["in_use"]:
+            if self.regList[ins_String["ins_rs"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
@@ -376,12 +376,12 @@ class MIPS:
                 sign_bit = bin(int(ins_String["ins_imm"][0], 16)).split('b')[-1].zfill(4)[0]
 
                 if sign_bit == '1':#changed
-                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_imm"]
+                    self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_imm"]
                 else:
                     self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
                 #get A, B and imm
         elif ins_String["ins_type"] == 3: #SD/LD
-            if self.regList[ins_String["ins_base"]]["in_use"] or self.regList[ins_String["ins_rt"]]["in_use"]:
+            if self.regList[ins_String["ins_base"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
@@ -394,12 +394,12 @@ class MIPS:
                 sign_bit = bin(int(ins_String["ins_offset"][0], 16)).split('b')[-1].zfill(4)[0]
 
                 if sign_bit == '1':#changed
-                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_offset"]
+                    self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_offset"]
                 else:
                     self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_offset"].zfill(16)
                 #get A, B and imm
         else: #REGISTERS
-            if self.regList[ins_String["ins_rt"]]["in_use"] or self.regList[ins_String["ins_rs"]]["in_use"] or self.regList[ins_String["ins_rd"]]["in_use"]:
+            if self.regList[ins_String["ins_rt"]]["in_use"] or self.regList[ins_String["ins_rs"]]["in_use"]:
                 ins_String["if_Stall"] = True
             else:
                 ins_String["if_Stall"] = False
@@ -411,7 +411,7 @@ class MIPS:
                 sign_bit = bin(int(ins_String["ins_Opcode"][-4:][0], 16)).split('b')[-1].zfill(4)[0]
 
                 if sign_bit == '1':#changed
-                    self.reg_Phase[1]["ID/EX.IMM"] = 14*'F' + ins_String["ins_Opcode"][-4:]
+                    self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_Opcode"][-4:]
                 else:
                     self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_Opcode"][-4:].zfill(16)
                 #get A, B and imm
@@ -671,7 +671,7 @@ class MIPS:
         while nCtr < len(code_line):
             ins_Input = {}
             # OLD ins_Input["inst_String"] = input(self.address_hex + " ").upper()
-            ins_Input["inst_String"] = code_line[nCtr]
+            ins_Input["inst_String"] = code_line[nCtr].upper()
             ins_Input["inst_add"] = self.address_hex
             self.address_int += 4
             self.address_hex = hex(self.address_int).split('x')[-1].zfill(4).upper()
@@ -687,6 +687,8 @@ class MIPS:
                 else:
                     print("Instruction Error asdasd")
                     print("Instruction Does not exist")
+#                    pprint()
+                    
                     self.if_Error = True
                     self.Error_Line = nCtr 
                     break
@@ -818,10 +820,12 @@ class MIPS:
             maxCount = self.max_Ins + 1
             while inCount < self.max_Ins + 1:
                 print("inst # ", inCount , self.max_Ins)
-
+#                pprint(self.ins_String[inCount])
+                print("PHASE", self.ins_String[inCount]["inst_Phase"])
+                pprint(self.ins_String[inCount])
                 phase = phase_type[self.ins_String[inCount]["inst_Phase"]](self.ins_String[inCount])
 #                pprint(phase)
-                print('current ',self.ins_String[inCount]["inst_String"])
+#                print('current ',self.ins_String[inCount]["inst_String"])
     #            pprint(self.ins_String[inCount])
 
                 #--BGTZC/J--#
@@ -835,16 +839,19 @@ class MIPS:
 
                     if not self.ins_String[inCount]["if_Stall"]:
                         if inCount+1 < len(self.ins_String) and self.ins_String[inCount]["inst_Phase"] == 2:
+                            print("---I AM FLUSHING---")
                             print('current ',self.ins_String[inCount+1]["inst_String"])
                             flush_phase = phase_type[1](self.ins_String[inCount+1])
                             cycle_phase[inCount+1] = flush_phase["phase"]
                             self.cycle_content[inCount+1] = flush_phase["content"]
                         if inCount+2 < len(self.ins_String)and self.ins_String[inCount]["inst_Phase"] == 3:
+                            print("---I AM FLUSHING---")
                             print('current ',self.ins_String[inCount+2]["inst_String"])
                             flush_phase = phase_type[1](self.ins_String[inCount+2])
                             cycle_phase[inCount+2] = flush_phase["phase"]
                             self.cycle_content[inCount+2] = flush_phase["content"]
                         if inCount+3 < len(self.ins_String)and self.ins_String[inCount]["inst_Phase"] == 4:
+                            print("---I AM FLUSHING---")
                             print('current ',self.ins_String[inCount+3]["inst_String"])
                             flush_phase = phase_type[1](self.ins_String[inCount+3])
                             cycle_phase[inCount+3] = flush_phase["phase"]
@@ -854,24 +861,32 @@ class MIPS:
 
                 if self.ins_String[inCount]["inst_Phase"] == 6:
                     self.done += 1
+                    self.ins_String[inCount]["inst_Phase"] = 0
                     #--BGTZC/J--#
-                    if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
-                        cycle_phase[inCount]= phase["phase"] #Store before jumping lines
-                        self.cycle_content[inCount]= phase["content"] #Store before jumping lines
-                        if_jumped = True
-                        sanitized = self.ins_String[inCount]["inst_String"].split(" ")
-                        self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
-                        self.max_Ins = inCount = self.done 
-                        inCount -=1
+#                    if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
+#                        cycle_phase[inCount]= phase["phase"] #Store before jumping lines
+#                        self.cycle_content[inCount]= phase["content"] #Store before jumping lines
+#                        if_jumped = True
+#                        sanitized = self.ins_String[inCount]["inst_String"].split(" ")
+#                        self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
+#                        self.max_Ins = inCount = self.done 
+#                        inCount -=1
                 if self.ins_String[inCount]["inst_Phase"] == 5:  
                     if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
                             cycle_phase[inCount]= phase["phase"] #Store before jumping lines
                             self.cycle_content[inCount]= phase["content"] #Store before jumping lines
                             if_jumped = True
                             sanitized = self.ins_String[inCount]["inst_String"].split(" ")
-                            self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
+                            
+                            int_address = self.get_line_address(sanitized[len(sanitized)-1])
+                            print("this is the address ", int_address)
+                            self.ins_String[inCount]["inst_Phase"] = 1
+                            
+                            self.done = int_address
                             self.max_Ins = inCount = self.done 
                             inCount -=1
+                            
+                            
                         #--BGTZC/J--#
 
                 if self.ins_String[inCount]["if_Stall"]:
