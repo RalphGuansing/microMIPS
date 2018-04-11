@@ -277,19 +277,30 @@ class MIPS:
     def DADDIU_XORI(self, instruction):
         if instruction["ins_Num"] == 2:
             #DADDIU operation
-            output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(instruction["ins_imm"], 16)
+            output = self.Two_Compliment(self.regList[instruction["ins_rs"]]["regValue"]) + self.Two_Compliment(self.reg_Phase[1]["ID/EX.IMM"])
+
+            if output < 0:
+            	output = ((output * -1) - 1) ^ int("FFFFFFFFFFFFFFFF", 16)
+            # if len(hex(output)) > 16:
+            # 	output = hex(output).split('x')[-1].upper()[1:]
+            # else:
+            # 	output = hex(output).split('x')[-1].upper()
+            #changed
+            # output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(instruction["ins_imm"], 16)
         else:
             #XORI operation
             
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) ^ int(instruction["ins_imm"], 16)
 
-        output = hex(output).split('x')[-1].zfill(16)
+        output = hex(output).split('x')[-1].zfill(16).upper()
         cond = 0
         return {"ALUOUT": output, "cond": cond}
 
     def DADDU_SLT(self, instruction):
         if instruction["ins_Num"] == 4:
             #DADDU operation
+            # output = self.Two_Compliment(self.regList[instruction["ins_rs"]]["regValue"]) + self.Two_Compliment(self.regList[instruction["ins_rt"]]["regValue"])
+            #changed
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(self.regList[instruction["ins_rt"]]["regValue"], 16)
         else:
             #SLT operation
@@ -297,7 +308,10 @@ class MIPS:
                 output = int(self.regList[instruction["ins_rs"]]["regValue"], 16)
             else:
                 output = 0
-        output = hex(output).split('x')[-1].zfill(16)
+        if len(hex(output)) > 16:
+        	output = hex(output).split('x')[-1].zfill(16).upper()[1:]
+        else:
+        	output = hex(output).split('x')[-1].zfill(16).upper()
         cond = 0
         return {"ALUOUT": output, "cond": cond}
 
@@ -373,7 +387,7 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_rs"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                sign_bit = bin(int(ins_String["ins_imm"][0], 16)).split('b')[-1].zfill(4)[0]
+                sign_bit = self.Sign_Bit(ins_String["ins_imm"][0])#changed
 
                 if sign_bit == '1':#changed
                     self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_imm"]
@@ -391,7 +405,7 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_base"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                sign_bit = bin(int(ins_String["ins_offset"][0], 16)).split('b')[-1].zfill(4)[0]
+                sign_bit = self.Sign_Bit(ins_String["ins_offset"][0])#changed
 
                 if sign_bit == '1':#changed
                     self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_offset"]
@@ -408,7 +422,7 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.A"] = self.regList[ins_String["ins_rs"]]["regValue"]
                 self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
-                sign_bit = bin(int(ins_String["ins_Opcode"][-4:][0], 16)).split('b')[-1].zfill(4)[0]
+                sign_bit = self.Sign_Bit(ins_String["ins_Opcode"][-4:][0])#changed
 
                 if sign_bit == '1':#changed
                     self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_Opcode"][-4:]
@@ -585,6 +599,21 @@ class MIPS:
             self.regList[ins_String["ins_rt"]]["in_use"] = False
         content = ""
         return {"phase":"","content":content}
+
+    def Sign_Bit(self, hex_String):#changed
+    	sBit = bin(int(hex_String, 16)).split('b')[-1].zfill(4)[0]
+    	return sBit
+
+    def Two_Compliment(self, hex_value):#changed
+    	mask = "FFFFFFFFFFFFFFFF"
+    	sBit = self.Sign_Bit(hex_value[0])
+
+    	if sBit == '1':
+    		value = int(mask, 16) ^ int(hex_value, 16)
+    		return -1 * (value + 1)
+    	else:
+    		return int(hex_value, 16)
+
 
     #EXTRA FUNCTIONS FOR BGTZC
     def find_address(self, code):
