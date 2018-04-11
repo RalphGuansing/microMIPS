@@ -664,7 +664,8 @@ class MIPS:
             self.regList[ins_String["ins_rt"]]["in_use"] = False
 
         else:
-            self.regList[ins_String["ins_rt"]]["in_use"] = False
+            if ins_String["ins_rt"] != "": 
+                self.regList[ins_String["ins_rt"]]["in_use"] = False
         content = ""
         return {"phase":"","content":content}
 
