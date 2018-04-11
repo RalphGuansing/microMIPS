@@ -256,8 +256,8 @@ class Window(QtWidgets.QMainWindow):
             
             for i,line in enumerate(self.code_line):
                 binVal = bin(int(self.opcodes[i], 16)).split('b')[-1].zfill(32)
-                print(binVal)
-                print(hex(int(binVal,2)))
+#                print(binVal)
+#                print(hex(int(binVal,2)))
                 table.insertRow(table.rowCount())
                 table.setItem(i, 0,QtWidgets.QTableWidgetItem(line))
                 table.setItem(i, 1,QtWidgets.QTableWidgetItem(binVal[0:6]))
@@ -373,7 +373,7 @@ class PipelineView(QtWidgets.QGridLayout):
         if self.cycle_content["phase"] == "MEM":
             content_title = ["MEM/WB.LMD","MEM/WB.IR","MEM/WB.ALUOUTPUT","MEM/WB.B",'MEM/WB.RANGE']
         if self.cycle_content["phase"] == "WB":
-            content_title = ["Rn"]
+            content_title = ["Rn","Register affected"]
             
         if len(content_title) != 0:
         

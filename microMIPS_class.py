@@ -128,15 +128,19 @@ class MIPS:
         ins_Op = {4 : 0b101101, 5 : 0b101010}
         bin_Opcode = []
         bin_Opcode.append(bin(0).split('b')[-1].zfill(6))
-
+        
         sanitized = expression.split(",")
-        sanitized.insert(1, sanitized[0][-2:])
-        del sanitized[0]
-
-        rd = int(sanitized[0][-1:])
-        rs = int(sanitized[1][-1:])
-        rt = int(sanitized[2][-1:])
-
+        sanitized_array = sanitized[0].split(" ")
+        del sanitized_array[0]
+        sanitized[0] = sanitized_array[0]
+#        print("sanitized = ", sanitized)
+        
+        rd = int(sanitized[0][1:])
+        rs = int(sanitized[1][1:])
+        rt = int(sanitized[2][1:])
+#        print("rd = ",rd,"rs = ",rs,"rt = ",rt)
+        
+        
         bin_Opcode.append(self.regList[rs]["regNum"])
         bin_Opcode.append(self.regList[rt]["regNum"])
         bin_Opcode.append(self.regList[rd]["regNum"])
@@ -157,13 +161,19 @@ class MIPS:
         bin_Opcode.append(bin(ins_Op[self.ins_List.index(expression.split(" ")[0])]).split('b')[-1].zfill(6))
 
         sanitized = expression.split(",")
-        sanitized.insert(1, sanitized[0][-2:])
-        del sanitized[0]
-
-        base = int(sanitized[1].split('(')[-1][:2][1])
-        rt = int(sanitized[0][-1:])
+        sanitized_array = sanitized[0].split(" ")
+        del sanitized_array[0]
+        sanitized[0] = sanitized_array[0]
+        
+        print("IN LD")
+        print(sanitized)
+        
+        base = int(sanitized[1].split('(')[1][1:-1])
+        rt = int(sanitized[0][1:])
         offset = sanitized[1].split('(')[0][-4:]
-
+        print("base = ",base, "\nrt = ",rt, "\noffset = ",offset )
+        
+        
         bin_Opcode.append(self.regList[base]["regNum"])
         bin_Opcode.append(self.regList[rt]["regNum"])
 
@@ -184,11 +194,20 @@ class MIPS:
         bin_Opcode.append(bin(ins_Op[self.ins_List.index(expression.split(" ")[0])]).split('b')[-1].zfill(6))
 
         sanitized = expression.split(",")
-        sanitized.insert(1, sanitized[0][-2:])
-        del sanitized[0]
-
-        rt = int(sanitized[0][-1:])
-        rs = int(sanitized[1][-1:])
+        sanitized_array = sanitized[0].split(" ")
+        del sanitized_array[0]
+        sanitized[0] = sanitized_array[0]
+        
+        
+        print("sanitized = ", sanitized)
+#        sanitized.insert(1, sanitized[0][-2:])
+#        print("sanitized = ", sanitized)
+        
+        
+        print("rt = ", sanitized[0][1:])
+        print("rs = ", sanitized[1][1:])
+        rt = int(sanitized[0][1:])
+        rs = int(sanitized[1][1:])
         imm = sanitized[2][-4:]
 
         bin_Opcode.append(self.regList[rs]["regNum"])
@@ -200,11 +219,11 @@ class MIPS:
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
         print(expression)
         print("OPCODE: ", hex_Opcode, "\n")
-
+#        a = input()
         return {"ins_rs": rs, "ins_rt": rt, "ins_imm": imm, "Opcode": hex_Opcode, "if_BCJ": False, "if_Imm": True, "if_LSD": False}
 
     def BGTZC_REFORMAT(self, expression, current_line):
-#        print("in BGTZC_REFORMAT")
+        print("in BGTZC_REFORMAT")
         print(expression)
         ins_Op = {0: 0b010111, 1: 0b000010}
         bin_Opcode = []
@@ -214,9 +233,9 @@ class MIPS:
         sanitized = expression.split(" ")
         del sanitized[0]
 #        print(sanitized)
-
-        rt = int(sanitized[0][:-1][-1:])
-
+#        print("sanitized in BGTZC ", sanitized[0], sanitized[0][1:-1])
+        rt = int(sanitized[0][1:-1])
+        
         bin_Opcode.append(self.regList[rt]["regNum"])
 
         # offset binary
@@ -308,8 +327,8 @@ class MIPS:
             #DADDU operation
             # output = self.Two_Compliment(self.regList[instruction["ins_rs"]]["regValue"]) + self.Two_Compliment(self.regList[instruction["ins_rt"]]["regValue"])
             #changed
-            print("RS = ", int(self.regList[instruction["ins_rs"]]["regValue"], 16))
-            print("RT = ", int(self.regList[instruction["ins_rt"]]["regValue"], 16))
+#            print("RS = ", int(self.regList[instruction["ins_rs"]]["regValue"], 16))
+#            print("RT = ", int(self.regList[instruction["ins_rt"]]["regValue"], 16))
             
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(self.regList[instruction["ins_rt"]]["regValue"], 16)
         else:
@@ -606,24 +625,30 @@ class MIPS:
         return {"phase":"MEM", "content":content}
 
     def WB(self, ins_String):
+        
         if ins_String["ins_type"] == 0:
             # self.regList[ins_String["ins_rd"]]["in_use"] = False
             self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
             self.regList[ins_String["ins_rd"]]["regValue"] = self.reg_Phase[4]["Rn"]
+            self.reg_Phase[4]["Register affected"] = "R"+str(ins_String["ins_rd"])
         elif ins_String["ins_type"] == 2:
             # self.regList[ins_String["ins_rt"]]["in_use"] = False
             self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.ALUOUTPUT"]
             self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
+            self.reg_Phase[4]["Register affected"] = "R"+str(ins_String["ins_rt"])
+            print("register ", ins_String["ins_rt"])
         elif ins_String["ins_type"] == 1:
             self.reg_Phase[4]["Rn"] = None
+            self.reg_Phase[4]["Register affected"] = None
         else:
             if ins_String["ins_Num"] == 0:
-#            print("in WB ", ins_String["ins_Num"])
                 # self.regList[ins_String["ins_rt"]]["in_use"] = False
                 self.reg_Phase[4]["Rn"] = self.reg_Phase[3]["MEM/WB.LMD"]
+                self.reg_Phase[4]["Register affected"] = "R"+str(ins_String["ins_rt"])
                 self.regList[ins_String["ins_rt"]]["regValue"] = self.reg_Phase[4]["Rn"]
             else:
-                pass
+                self.reg_Phase[4]["Rn"] = None
+                self.reg_Phase[4]["Register affected"] = None
             
         self.reg_Phase[3].clear()
         print("WB")
@@ -880,7 +905,7 @@ class MIPS:
                     pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))  
                     pipeline_map.selectColumn(pipeline_map.columnCount() -1) 
         
-        pprint(cycle_array)
+#        pprint(cycle_array)
         print("in update ui")
 #        print(self.cycle_array)
         
@@ -889,7 +914,7 @@ class MIPS:
 
     
     def start_cycle(self, if_Single, main_layout):
-        pprint(self.ins_String)
+#        pprint(self.ins_String)
 #        print(string)
         
         phase_type = {1: self.IF, 2: self.ID, 3: self.EX, 4: self.MEM, 5: self.WB, 6: self.BUFFER}
@@ -915,7 +940,7 @@ class MIPS:
                 print("inst # ", inCount , self.max_Ins)
 #                pprint(self.ins_String[inCount])
                 print("PHASE", self.ins_String[inCount]["inst_Phase"])
-                pprint(self.ins_String[inCount])
+#                pprint(self.ins_String[inCount])
                 phase = phase_type[self.ins_String[inCount]["inst_Phase"]](self.ins_String[inCount])
 #                pprint(phase)
 #                print('current ',self.ins_String[inCount]["inst_String"])
@@ -1024,10 +1049,10 @@ class MIPS:
         
         self.Update_ui(main_layout,self.cycle_array)
 #        Print_to_xlsx(self.cycle_array,self.code_line)
-        pprint(len(self.cycle_array))
+#        pprint(len(self.cycle_array))
 #        pprint(self.cycle_content_array)
 #        pprint(code_line)
-        pprint(self.opcode)
+#        pprint(self.opcode)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
