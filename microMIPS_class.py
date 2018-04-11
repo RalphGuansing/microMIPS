@@ -393,7 +393,7 @@ class MIPS:
 
         elif instruction["ins_Num"] == 7:
             IMM = int(self.reg_Phase[1]["ID/EX.IMM"], 16)
-            output = IMM * 4
+            output = (IMM * 4) + int("1000",16)
             cond = 1
 
         output = hex(output).split('x')[-1].zfill(16)
@@ -422,6 +422,8 @@ class MIPS:
                 self.reg_Phase[1]["ID/EX.IR"] = self.reg_Phase[0]["IF/ID.IR"]
                 self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                 self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
+                self.reg_Phase[1]["ID/EX.A"] = None
+                self.reg_Phase[1]["ID/EX.B"] = None
             else:
                 if self.regList[ins_String["ins_rt"]]["in_use"]:
                     ins_String["if_Stall"] = True
