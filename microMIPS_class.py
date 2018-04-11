@@ -60,6 +60,7 @@ class MIPS:
         
         self.address_location = []
         self.clean_code = ""
+        self.loops = 0
         
     def DADDU_SLT_REGEX(self, expression):
         sanitized = expression.split(" ")
@@ -220,8 +221,12 @@ class MIPS:
 
         # offset binary
         offset_line = self.get_line_address(sanitized[1])
-        offset = abs(offset_line - current_line - 1)
-        bin_Opcode.append(bin(offset).split('b')[-1].zfill(16))
+        offset = offset_line - current_line - 1
+        if offset >= 0:
+            bin_Opcode.append(bin(offset).split('b')[-1].zfill(16))
+        else:
+            offset = ((offset * -1) - 1) ^ int("FFFF", 16)
+            bin_Opcode.append(bin(offset).split('b')[-1].zfill(16))
         hex_Opcode = hex(int("".join(bin_Opcode), 2)).split('x')[-1].zfill(8).upper()
 
     #    print(offset)
@@ -280,7 +285,9 @@ class MIPS:
             output = self.Two_Compliment(self.regList[instruction["ins_rs"]]["regValue"]) + self.Two_Compliment(self.reg_Phase[1]["ID/EX.IMM"])
 
             if output < 0:
-            	output = ((output * -1) - 1) ^ int("FFFFFFFFFFFFFFFF", 16)
+                print("output before", hex(output))
+                output = ((output * -1) - 1) ^ int("FFFFFFFFFFFFFFFF", 16)
+                print("output after", hex(output))
             # if len(hex(output)) > 16:
             # 	output = hex(output).split('x')[-1].upper()[1:]
             # else:
@@ -301,6 +308,9 @@ class MIPS:
             #DADDU operation
             # output = self.Two_Compliment(self.regList[instruction["ins_rs"]]["regValue"]) + self.Two_Compliment(self.regList[instruction["ins_rt"]]["regValue"])
             #changed
+            print("RS = ", int(self.regList[instruction["ins_rs"]]["regValue"], 16))
+            print("RT = ", int(self.regList[instruction["ins_rt"]]["regValue"], 16))
+            
             output = int(self.regList[instruction["ins_rs"]]["regValue"], 16) + int(self.regList[instruction["ins_rt"]]["regValue"], 16)
         else:
             #SLT operation
@@ -314,16 +324,45 @@ class MIPS:
         	output = hex(output).split('x')[-1].zfill(16).upper()
         cond = 0
         return {"ALUOUT": output, "cond": cond}
-
+    
+    
+    def twos_comp(self, binVal):
+#        for i in bin(IMM).split('b')[-1]:
+        bin_String = ""
+        for i in binVal:
+            bin_String += str(1-int(i))
+            
+        bin_String = bin(int(bin_String, 2) + 1).split('b')[-1]
+            
+#        print(bin_String.zfill(64))
+        return bin_String.zfill(64)
+        
     def BGTZC_J(self, instruction):
     #    pprint(self.reg_Phase)
         output = ""
         cond = 0
+        bin_String = ""
     #    print(int(self.regList[instruction["ins_rt"]]["regValue"], 16))
         if instruction["ins_Num"] == 6:
             #BGTZC operation
+            
+            
             NPC = int(self.reg_Phase[1]["ID/EX.NPC"], 16)
-            IMM = int(self.reg_Phase[1]["ID/EX.IMM"], 16)
+            
+            sign_bit = self.Sign_Bit(self.reg_Phase[1]["ID/EX.IMM"][0])#changed
+
+            if sign_bit == '1':#changed
+                IMM = int(self.reg_Phase[1]["ID/EX.IMM"], 16)
+                bin_IMM = bin(IMM).split('b')[-1]
+                bin_Complement = self.twos_comp(bin_IMM)
+                IMM = int(self.twos_comp(bin_IMM),2)*-1
+            else:
+                IMM = int(self.reg_Phase[1]["ID/EX.IMM"], 16)
+                
+            print("NPC = ",NPC)
+            print("IMM = ",IMM)
+            
+            
     #        print(NPC, " + ", IMM, " *4")
             output = NPC + IMM * 4
     #        print("ALUOUTPUT = ", hex(output))
@@ -374,7 +413,11 @@ class MIPS:
                     self.reg_Phase[1]["ID/EX.NPC"] = self.reg_Phase[0]["IF/ID.NPC"]
                     self.reg_Phase[1]["ID/EX.B"] = self.regList[ins_String["ins_rt"]]["regValue"]
                     self.reg_Phase[1]["ID/EX.A"] = None
-                    self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
+                    sign_bit = self.Sign_Bit(ins_String["ins_imm"][0])
+                    if sign_bit == '1':#changed
+                        self.reg_Phase[1]["ID/EX.IMM"] = 12*'F' + ins_String["ins_imm"]
+                    else:
+                        self.reg_Phase[1]["ID/EX.IMM"] = ins_String["ins_imm"].zfill(16)
                     #get A, B and imm
             #---------------------INC---------------------------
         elif ins_String["ins_type"] == 2: #IMM
@@ -601,9 +644,28 @@ class MIPS:
         return {"phase":"","content":content}
 
     def Sign_Bit(self, hex_String):#changed
-    	sBit = bin(int(hex_String, 16)).split('b')[-1].zfill(4)[0]
-    	return sBit
+#        print("this is the hex_String ", hex_String)
+        sBit = bin(int(hex_String, 16)).split('b')[-1].zfill(4)[0]
+#        print("This is SBit ",sBit)
+        return sBit
+    def showMessage(self, title,message, info=None, messageType=0):
+        
+        """ This Method is responsible for Showing Dialogs if there is an error """
+                    
+        infoBox = QtWidgets.QMessageBox()
+        if messageType == 0:
+            infoBox.setIcon(QtWidgets.QMessageBox.Warning)
+        else:
+            infoBox.setIcon(QtWidgets.QMessageBox.Information)
+        infoBox.setText(message)
+        if info is not None:
+            infoBox.setInformativeText(info)
+        infoBox.setWindowTitle(title)
+        infoBox.setEscapeButton(QtWidgets.QMessageBox.Close) 
+        infoBox.exec_()
 
+        infoBox.close()
+        
     def Two_Compliment(self, hex_value):#changed
     	mask = "FFFFFFFFFFFFFFFF"
     	sBit = self.Sign_Bit(hex_value[0])
@@ -788,6 +850,7 @@ class MIPS:
         self.cycle_content_array=[]
         self.cycle_content={}
         self.is_Done_cycle = False
+        self.loops = 0
     def Update_ui(self,main_layout,cycle_array):
         pipeline_map = main_layout.pipelineMap
 #        pipeline_map.setColumnCount(1)
@@ -814,7 +877,8 @@ class MIPS:
 #            print("phase in Cycle", nCtr +1,)
             for nCtr_2 in range(0, len(self.code_line)):
                 if nCtr_2 in cycle:
-                    pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))     
+                    pipeline_map.setItem(nCtr_2,nCtr, QtWidgets.QTableWidgetItem(cycle[nCtr_2]))  
+                    pipeline_map.selectColumn(pipeline_map.columnCount() -1) 
         
         pprint(cycle_array)
         print("in update ui")
@@ -900,8 +964,14 @@ class MIPS:
 #                        self.done = self.get_line_address(sanitized[len(sanitized)-1])-1
 #                        self.max_Ins = inCount = self.done 
 #                        inCount -=1
-                if self.ins_String[inCount]["inst_Phase"] == 5:  
+                if self.ins_String[inCount]["inst_Phase"] == 5: 
+                    
+                    if self.ins_String[inCount]["if_BR_J"] and self.loops == 20:
+                        self.ins_String[inCount]["cond"] = 0
+                        self.showMessage("Infinite Loop","An infinite loop was detected.","Branch condition is now set to 0",1)
+                        
                     if self.ins_String[inCount]["if_BR_J"] and self.ins_String[inCount]["cond"]:
+                            self.loops += 1
                             cycle_phase[inCount]= phase["phase"] #Store before jumping lines
                             self.cycle_content[inCount]= phase["content"] #Store before jumping lines
                             if_jumped = True

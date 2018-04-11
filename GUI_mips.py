@@ -252,11 +252,25 @@ class Window(QtWidgets.QMainWindow):
         
             table = self.form_widget.layout.load_tab.layout.opcodes
             table.setRowCount(0)
-
+            address_array = []
+            
             for i,line in enumerate(self.code_line):
+                binVal = bin(int(self.opcodes[i], 16)).split('b')[-1].zfill(32)
+                print(binVal)
+                print(hex(int(binVal,2)))
                 table.insertRow(table.rowCount())
                 table.setItem(i, 0,QtWidgets.QTableWidgetItem(line))
+                table.setItem(i, 1,QtWidgets.QTableWidgetItem(binVal[0:6]))
+                table.setItem(i, 2,QtWidgets.QTableWidgetItem(binVal[6:11]))
+                table.setItem(i, 3,QtWidgets.QTableWidgetItem(binVal[11:16]))
+                table.setItem(i, 4,QtWidgets.QTableWidgetItem(binVal[16:21]))
+                table.setItem(i, 5,QtWidgets.QTableWidgetItem(binVal[21:26]))
+                table.setItem(i, 6,QtWidgets.QTableWidgetItem(binVal[26:32]))
                 table.setItem(i, 7,QtWidgets.QTableWidgetItem(self.opcodes[i]))
+                address_array.append(hex(int("1000",16)+(i*4)).split('x')[-1].zfill(4).upper())
+#                address_array.append
+            table.setVerticalHeaderLabels(address_array)
+                
 
             reg_table = self.form_widget.layout.main_tab.layout.registers
             reg_table.setColumnCount(0)
@@ -267,7 +281,11 @@ class Window(QtWidgets.QMainWindow):
             regList = list(self.MIPS.regList)        
 
             for nCtr, reg in enumerate(regList):
-                reg_table.setItem(nCtr, 0,QtWidgets.QTableWidgetItem(reg["regValue"]))
+                
+                regValue = QtWidgets.QTableWidgetItem(reg["regValue"])
+                if nCtr == 0:
+                    regValue.setFlags(QtCore.Qt.ItemIsEditable)
+                reg_table.setItem(nCtr, 0, regValue)
 
 
 
@@ -349,7 +367,7 @@ class PipelineView(QtWidgets.QGridLayout):
         if self.cycle_content["phase"] == "IF":
             content_title = ["IF/ID.IR", "IF/ID.NPC"]
         if self.cycle_content["phase"] == "ID":
-            content_title = ["ID/EX.A", "ID/EX.B", "ID/EX.IMM", "ID/EX.IR", "ID/EX.NPC"]
+            content_title = ["ID/EX.A", "ID/EX.B", "ID/EX.IMM", "ID/EX.IR"]
         if self.cycle_content["phase"] == "EX":
             content_title = ["EX/MEM.ALUOUTPUT", "EX/MEM.COND", "EX/MEM.IR", "EX/MEM.B"]
         if self.cycle_content["phase"] == "MEM":
@@ -386,14 +404,14 @@ class loadview(QtWidgets.QVBoxLayout):
         
         self.textEdit = QtWidgets.QTextEdit()
         self.textEdit.setText("""DADDIU R1, R0, #0000
-DADDIU R2, R0, #0000
+L1: DADDIU R2, R0, #0000
 DADDU R3, R1, R2
 BGTZC R1, L1
 DADDU R3, R1, R1
 DADDIU R3, R0, #0000
 DADDIU R3, R0, #0000
 DADDIU R3, R0, #0000
-L1: DADDIU R3, R0, #6969
+DADDIU R3, R0, #6969
 DADDIU R3, R0, #0000
 DADDIU R3, R0, #0000
 SD R2, 0F00(R0)
