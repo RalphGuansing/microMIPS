@@ -403,21 +403,7 @@ class loadview(QtWidgets.QVBoxLayout):
         label1 = QtWidgets.QLabel('Please Enter Code Here')
         
         self.textEdit = QtWidgets.QTextEdit()
-        self.textEdit.setText("""DADDIU R1, R0, #0000
-L1: DADDIU R2, R0, #0000
-DADDU R3, R1, R2
-BGTZC R1, L1
-DADDU R3, R1, R1
-DADDIU R3, R0, #0000
-DADDIU R3, R0, #0000
-DADDIU R3, R0, #0000
-DADDIU R3, R0, #6969
-DADDIU R3, R0, #0000
-DADDIU R3, R0, #0000
-SD R2, 0F00(R0)
-DADDIU R3, R2, #0000
-XORI R1, R2, #1000
-""")
+#        self.textEdit.setText()
         
         self.opcodes = QtWidgets.QTableWidget()
         self.opcodes.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)

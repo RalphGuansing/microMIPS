@@ -2,7 +2,7 @@ import re
 from pprint import pprint
 from GUI_mips import *
 from threading import Thread
-from excelwriter import *
+#from excelwriter import *
 
 test_string = """DADDIU R1, R0, #0000
 DADDIU R2, R0, #0000
